@@ -9,7 +9,7 @@ export const Label = ({ className, children, ...rest }: ILabelProps) => (
 	// biome-ignore lint/a11y/noLabelWithoutControl: <explanation>Label is used as a wrapper for the input, so it will always have a control.</explanation>
 	<label
 		className={cn(
-			"text-[10px] uppercase tracking-widest font-medium text-amber-600/70 font-serif",
+			"text-lg uppercase tracking-widest font-medium text-amber-600/70",
 			className,
 		)}
 		{...rest}
