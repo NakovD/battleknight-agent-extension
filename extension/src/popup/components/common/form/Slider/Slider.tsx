@@ -36,7 +36,7 @@ export const Slider = ({
 
 				<SliderBackgroundFill
 					style={{
-						left: `${percentage}%`,
+						width: `${percentage}%`,
 					}}
 				/>
 

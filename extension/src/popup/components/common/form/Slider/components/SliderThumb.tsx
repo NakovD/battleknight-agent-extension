@@ -17,7 +17,7 @@ export const SliderThumb = ({
 }: ISliderThumbProps) => (
 	<div
 		className={cn(
-			"absolute w-3.5 h-3.5 -translate-x-1/2 pointer-events-none",
+			"absolute w-3.5 h-3.5 -translate-x-1/2",
 			"border border-amber-500/80 bg-stone-950",
 			"shadow-[0_0_6px_rgba(217,119,6,0.35)]",
 			disabled ? "opacity-40" : "",
