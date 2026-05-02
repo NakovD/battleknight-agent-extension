@@ -9,7 +9,7 @@ export const SliderTrackBackground = ({
 }: ISliderTrackBackgroundProps) => (
 	<div
 		className={cn(
-			"absolute inset-x-0 h-0.75 bg-stone-800 border border-stone-700/40",
+			"absolute inset-x-0 h-1.5 bg-stone-800 border border-stone-700/40 cursor-pointer rounded",
 			className,
 		)}
 		{...props}

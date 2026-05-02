@@ -1,10 +1,4 @@
-import {
-	type ComponentProps,
-	type ComponentRef,
-	useCallback,
-	useRef,
-	useState,
-} from "react";
+import { type ComponentRef, useRef, useState } from "react";
 import { SliderBackgroundFill } from "@/popup/components/common/form/Slider/components/SliderBackgroundFill";
 import { SliderTrackBackground } from "@/popup/components/common/form/Slider/components/SliderBackgroundTrack";
 import { SliderThumb } from "@/popup/components/common/form/Slider/components/SliderThumb";
@@ -23,9 +17,6 @@ interface IMultiSliderProps {
 type CalculateValueParams = {
 	clientX: number;
 	valueServed: "lower" | "upper";
-	min: number;
-	max: number;
-	step: number;
 	lowValue: number;
 	topValue: number;
 };
@@ -43,55 +34,88 @@ export const MultiSlider = ({
 	const [minValue, setMinValue] = useState(lowerValue);
 	const [maxValue, setMaxValue] = useState(upperValue);
 
-	const firstHandlePosition = calculateHandlePosition(minValue, min, max);
-	const secondHandlePosition = calculateHandlePosition(maxValue, min, max);
+	const firstHandlePosition = calculateHandlePositionPercentage(
+		minValue,
+		min,
+		max,
+	);
+	const secondHandlePosition = calculateHandlePositionPercentage(
+		maxValue,
+		min,
+		max,
+	);
 
 	const bgRef = useRef<ComponentRef<"div">>(null);
 
-	const calculateValue = useCallback(
-		({
-			clientX,
+	const calculateNewHandlePosition = (clientX: number) => {
+		if (!bgRef.current) return undefined;
+
+		const rect = bgRef.current.getBoundingClientRect();
+
+		const width = rect.width;
+
+		const offsetX = Math.min(Math.max(0, clientX - rect.left), width);
+
+		const percentage = offsetX / width;
+
+		const rawValue = percentage * (max - min) + min;
+
+		const steppedValue = Math.round(rawValue / step) * step;
+
+		return steppedValue;
+	};
+
+	const updateHandlePosition = ({
+		clientX,
+		lowValue,
+		topValue,
+		valueServed,
+	}: CalculateValueParams) => {
+		const newHandlePosition = calculateNewHandlePosition(clientX);
+
+		if (newHandlePosition === undefined) return;
+
+		const shouldUpdate = getShouldUpdate(
+			newHandlePosition,
 			lowValue,
 			topValue,
+			min,
+			max,
 			valueServed,
-			...settings
-		}: CalculateValueParams) => {
-			if (!bgRef.current) return;
+		);
 
-			const rect = bgRef.current.getBoundingClientRect();
+		if (!shouldUpdate) return;
 
-			const width = rect.width;
+		if (valueServed === "lower") return setMinValue(newHandlePosition);
 
-			const offsetX = Math.min(Math.max(0, clientX - rect.left), width);
+		setMaxValue(newHandlePosition);
+	};
 
-			const percentage = offsetX / width;
+	const handleTrackClick = (clientX: number) => {
+		if (disabled) return;
 
-			const rawValue =
-				percentage * (settings.max - settings.min) + settings.min;
+		const newHandlePosition = calculateNewHandlePosition(clientX);
 
-			const steppedValue = Math.round(rawValue / settings.step) * settings.step;
+		if (newHandlePosition === undefined) return;
 
-			const shouldUpdate = getShouldUpdate(steppedValue, {
-				clientX,
-				lowValue,
-				topValue,
-				valueServed,
-				...settings,
-			});
+		const distToMin = Math.abs(newHandlePosition - minValue);
+		const distToMax = Math.abs(newHandlePosition - maxValue);
 
-			if (!shouldUpdate) return;
+		if (distToMin < distToMax) {
+			setMinValue(newHandlePosition);
+			return;
+		}
 
-			if (valueServed === "lower") return setMinValue(steppedValue);
-
-			setMaxValue(steppedValue);
-		},
-		[],
-	);
+		setMaxValue(newHandlePosition);
+	};
 
 	return (
-		<div className="relative flex items-center h-5 cursor-pointer">
+		<div className="relative flex items-center h-5">
 			{/* Track background */}
-			<SliderTrackBackground ref={bgRef} />
+			<SliderTrackBackground
+				ref={bgRef}
+				onClick={(e) => handleTrackClick(e.clientX)}
+			/>
 
 			{/* Track fill */}
 			<SliderBackgroundFill
@@ -99,29 +123,24 @@ export const MultiSlider = ({
 					width: `${secondHandlePosition - firstHandlePosition}%`,
 					left: `${firstHandlePosition}%`,
 				}}
+				onClick={(e) => handleTrackClick(e.clientX)}
 			/>
 
 			<SliderThumb
 				position={firstHandlePosition}
 				disabled={disabled}
 				onDrag={(e) =>
-					calculateValue({
+					updateHandlePosition({
 						clientX: e.clientX,
 						valueServed: "lower",
-						max,
-						min,
-						step,
 						lowValue: minValue,
 						topValue: maxValue,
 					})
 				}
 				onDragEnd={(e) =>
-					calculateValue({
+					updateHandlePosition({
 						clientX: e.clientX,
 						valueServed: "lower",
-						max,
-						min,
-						step,
 						lowValue: minValue,
 						topValue: maxValue,
 					})
@@ -132,23 +151,17 @@ export const MultiSlider = ({
 				disabled={disabled}
 				thumbInnerColorClassName="bg-amber-800"
 				onDrag={(e) =>
-					calculateValue({
+					updateHandlePosition({
 						clientX: e.clientX,
 						valueServed: "upper",
-						max,
-						min,
-						step,
 						lowValue: minValue,
 						topValue: maxValue,
 					})
 				}
 				onDragEnd={(e) =>
-					calculateValue({
+					updateHandlePosition({
 						clientX: e.clientX,
 						valueServed: "upper",
-						max,
-						min,
-						step,
 						lowValue: minValue,
 						topValue: maxValue,
 					})
@@ -160,21 +173,22 @@ export const MultiSlider = ({
 	);
 };
 
-const calculateHandlePosition = (value: number, min: number, max: number) =>
-	((value - min) / (max - min)) * 100;
+const calculateHandlePositionPercentage = (
+	value: number,
+	min: number,
+	max: number,
+) => ((value - min) / (max - min)) * 100;
 
 const getShouldUpdate = (
 	steppedValue: number,
-	settings: CalculateValueParams,
+	lowValue: number,
+	topValue: number,
+	min: number,
+	max: number,
+	valueServed: CalculateValueParams["valueServed"],
 ) => {
-	if (settings.valueServed === "lower") {
-		return (
-			steppedValue <
-			calculateHandlePosition(settings.topValue, settings.min, settings.max)
-		);
+	if (valueServed === "lower") {
+		return steppedValue < calculateHandlePositionPercentage(topValue, min, max);
 	}
-	return (
-		steppedValue >
-		calculateHandlePosition(settings.lowValue, settings.min, settings.max)
-	);
+	return steppedValue > calculateHandlePositionPercentage(lowValue, min, max);
 };
