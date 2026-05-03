@@ -129,6 +129,7 @@ export const MultiSlider = ({
 			<SliderThumb
 				position={firstHandlePosition}
 				disabled={disabled}
+				thumbValue={minValue}
 				onDrag={(e) =>
 					updateHandlePosition({
 						clientX: e.clientX,
@@ -150,6 +151,7 @@ export const MultiSlider = ({
 				position={secondHandlePosition}
 				disabled={disabled}
 				thumbInnerColorClassName="bg-amber-800"
+				thumbValue={maxValue}
 				onDrag={(e) =>
 					updateHandlePosition({
 						clientX: e.clientX,

@@ -6,7 +6,7 @@ import { SliderThumb } from "@/popup/components/common/form/Slider/components/Sl
 interface ISliderProps
 	extends Omit<
 		ComponentPropsWithRef<"input">,
-		"value" | "checked" | "className"
+		"value" | "checked" | "className" | "type"
 	> {
 	max?: number;
 	step?: number;
@@ -51,7 +51,7 @@ export const Slider = ({
 					disabled={disabled}
 				/>
 
-				<SliderThumb position={percentage} />
+				<SliderThumb position={percentage} thumbValue={value} />
 			</div>
 
 			{hint && <p className="text-sm text-gray-500 mt-1">{hint}</p>}

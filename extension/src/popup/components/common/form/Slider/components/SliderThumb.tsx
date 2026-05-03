@@ -1,15 +1,18 @@
 import type { ComponentPropsWithRef } from "react";
 import { cn } from "@/popup/utilities/tailwindUtility";
 
-interface ISliderThumbProps extends ComponentPropsWithRef<"div"> {
+interface ISliderThumbProps
+	extends Omit<ComponentPropsWithRef<"div">, "children"> {
 	position: number;
 	disabled?: boolean;
 	thumbInnerColorClassName?: string;
+	thumbValue: number;
 }
 
 export const SliderThumb = ({
 	disabled,
 	position,
+	thumbValue,
 	style,
 	className,
 	thumbInnerColorClassName = "bg-amber-500",
@@ -29,5 +32,7 @@ export const SliderThumb = ({
 		<span className="absolute inset-0 flex items-center justify-center">
 			<span className={cn("w-1 h-1", thumbInnerColorClassName)} />
 		</span>
+
+		<p className="absolute top-5 -right-1">{thumbValue}</p>
 	</div>
 );
