@@ -1,6 +1,7 @@
 import type { ComponentPropsWithRef } from "react";
 import { SliderBackgroundFill } from "@/popup/components/common/form/Slider/components/SliderBackgroundFill";
 import { SliderTrackBackground } from "@/popup/components/common/form/Slider/components/SliderBackgroundTrack";
+import { SliderDynamicScale } from "@/popup/components/common/form/Slider/components/SliderLabel";
 import { SliderThumb } from "@/popup/components/common/form/Slider/components/SliderThumb";
 
 interface ISliderProps
@@ -31,7 +32,6 @@ export const Slider = ({
 	return (
 		<div className="flex flex-col">
 			<div className="relative flex items-center h-5">
-				{/* Track background */}
 				<SliderTrackBackground />
 
 				<SliderBackgroundFill
@@ -53,6 +53,7 @@ export const Slider = ({
 
 				<SliderThumb position={percentage} thumbValue={value} />
 			</div>
+			<SliderDynamicScale min={min} max={max} stepLabels={step} />
 
 			{hint && <p className="text-sm text-gray-500 mt-1">{hint}</p>}
 			{error && <p className="text-sm text-red-500 mt-1">{error}</p>}

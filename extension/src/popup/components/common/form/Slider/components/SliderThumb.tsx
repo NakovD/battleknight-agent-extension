@@ -20,7 +20,7 @@ export const SliderThumb = ({
 }: ISliderThumbProps) => (
 	<div
 		className={cn(
-			"absolute w-3.5 h-3.5 -translate-x-1/2",
+			"absolute w-3.5 h-3.5 -translate-x-1/2 cursor-pointer",
 			"border border-amber-500/80 bg-stone-950",
 			"shadow-[0_0_6px_rgba(217,119,6,0.35)]",
 			disabled ? "opacity-40" : "",
@@ -33,6 +33,6 @@ export const SliderThumb = ({
 			<span className={cn("w-1 h-1", thumbInnerColorClassName)} />
 		</span>
 
-		<p className="absolute top-5 -right-1">{thumbValue}</p>
+		<p className="absolute bottom-5 -right-1">{thumbValue}</p>
 	</div>
 );
