@@ -32,7 +32,7 @@ export const Tab = ({
 			"focus-visible:ring-1 focus-visible:ring-amber-600/40 focus-visible:ring-inset",
 			"disabled:opacity-30 disabled:cursor-not-allowed",
 			isActive && "text-amber-300",
-			!isActive && "text-stone-500 hover:text-stone-300",
+			!isActive && "text-stone-500 hover:text-stone-300 cursor-pointer",
 		)}
 	>
 		{icon && (

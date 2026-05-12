@@ -33,6 +33,6 @@ export const SliderThumb = ({
 			<span className={cn("w-1 h-1", thumbInnerColorClassName)} />
 		</span>
 
-		<p className="absolute bottom-5 -right-1">{thumbValue}</p>
+		<p className="absolute bottom-5 text-base -right-1">{thumbValue}</p>
 	</div>
 );
