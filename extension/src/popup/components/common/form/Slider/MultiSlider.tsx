@@ -1,4 +1,3 @@
-import { type ComponentRef, useEffect, useRef, useState } from "react";
 import { SliderBackgroundFill } from "@/popup/components/common/form/Slider/components/SliderBackgroundFill";
 import { SliderTrackBackground } from "@/popup/components/common/form/Slider/components/SliderBackgroundTrack";
 import { SliderDynamicScale } from "@/popup/components/common/form/Slider/components/SliderLabel";
@@ -14,6 +13,7 @@ interface IMultiSliderProps {
 	hint?: string;
 	error?: string;
 	disabled?: boolean;
+	showScale?: boolean;
 }
 
 export const MultiSlider = ({
@@ -25,6 +25,7 @@ export const MultiSlider = ({
 	hint,
 	error,
 	disabled,
+	showScale = true,
 }: IMultiSliderProps) => {
 	const {
 		minValue,
@@ -85,7 +86,9 @@ export const MultiSlider = ({
 				{hint && <p className="text-sm text-gray-500 mt-1">{hint}</p>}
 				{error && <p className="text-sm text-red-500 mt-1">{error}</p>}
 			</div>
-			<SliderDynamicScale min={min} max={max} stepLabels={step} />
+			{showScale && (
+				<SliderDynamicScale min={min} max={max} stepLabels={step} />
+			)}
 		</>
 	);
 };

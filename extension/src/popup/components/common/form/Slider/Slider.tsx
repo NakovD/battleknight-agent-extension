@@ -15,11 +15,13 @@ interface ISliderProps
 	value: number;
 	hint?: string;
 	error?: string;
+	showScale?: boolean;
 }
 
 export const Slider = ({
 	hint,
 	value,
+	showScale = true,
 	error,
 	disabled,
 	step = 1,
@@ -53,7 +55,9 @@ export const Slider = ({
 
 				<SliderThumb position={percentage} thumbValue={value} />
 			</div>
-			<SliderDynamicScale min={min} max={max} stepLabels={step} />
+			{showScale && (
+				<SliderDynamicScale min={min} max={max} stepLabels={step} />
+			)}
 
 			{hint && <p className="text-sm text-gray-500 mt-1">{hint}</p>}
 			{error && <p className="text-sm text-red-500 mt-1">{error}</p>}
