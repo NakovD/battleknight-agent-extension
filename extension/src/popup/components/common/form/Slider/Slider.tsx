@@ -16,6 +16,7 @@ interface ISliderProps
 	hint?: string;
 	error?: string;
 	showScale?: boolean;
+	formatLabel?: (value: number) => string;
 }
 
 export const Slider = ({
@@ -27,6 +28,7 @@ export const Slider = ({
 	step = 1,
 	max = 100,
 	min = 0,
+	formatLabel = (val) => val.toString(),
 	...rest
 }: ISliderProps) => {
 	const percentage = ((value - min) / (max - min)) * 100;
@@ -53,10 +55,19 @@ export const Slider = ({
 					disabled={disabled}
 				/>
 
-				<SliderThumb position={percentage} thumbValue={value} />
+				<SliderThumb
+					position={percentage}
+					thumbValue={value}
+					formatLabel={formatLabel}
+				/>
 			</div>
 			{showScale && (
-				<SliderDynamicScale min={min} max={max} stepLabels={step} />
+				<SliderDynamicScale
+					min={min}
+					max={max}
+					stepLabels={step}
+					formatLabel={formatLabel}
+				/>
 			)}
 
 			{hint && <p className="text-sm text-gray-500 mt-1">{hint}</p>}

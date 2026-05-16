@@ -5,8 +5,9 @@ interface ISliderThumbProps
 	extends Omit<ComponentPropsWithRef<"div">, "children"> {
 	position: number;
 	disabled?: boolean;
-	thumbInnerColorClassName?: string;
 	thumbValue: number;
+	formatLabel: (value: number) => string;
+	thumbInnerColorClassName?: string;
 }
 
 export const SliderThumb = ({
@@ -15,12 +16,13 @@ export const SliderThumb = ({
 	thumbValue,
 	style,
 	className,
+	formatLabel,
 	thumbInnerColorClassName = "bg-amber-500",
 	...rest
 }: ISliderThumbProps) => (
 	<div
 		className={cn(
-			"absolute w-3.5 h-3.5 -translate-x-1/2 cursor-pointer",
+			"absolute w-3.5 h-3.5 -translate-x-1/2 cursor-pointer flex justify-center",
 			"border border-amber-500/80 bg-stone-950",
 			"shadow-[0_0_6px_rgba(217,119,6,0.35)]",
 			disabled ? "opacity-40" : "",
@@ -33,6 +35,6 @@ export const SliderThumb = ({
 			<span className={cn("w-1 h-1", thumbInnerColorClassName)} />
 		</span>
 
-		<p className="absolute bottom-5 text-base -right-1">{thumbValue}</p>
+		<p className="relative bottom-7 text-base">{formatLabel(thumbValue)}</p>
 	</div>
 );

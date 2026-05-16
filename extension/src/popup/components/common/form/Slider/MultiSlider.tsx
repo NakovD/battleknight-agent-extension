@@ -14,6 +14,7 @@ interface IMultiSliderProps {
 	error?: string;
 	disabled?: boolean;
 	showScale?: boolean;
+	formatLabel?: (value: number) => string;
 }
 
 export const MultiSlider = ({
@@ -26,6 +27,7 @@ export const MultiSlider = ({
 	error,
 	disabled,
 	showScale = true,
+	formatLabel = (val) => val.toString(),
 }: IMultiSliderProps) => {
 	const {
 		minValue,
@@ -71,6 +73,7 @@ export const MultiSlider = ({
 					onDrag={(e) => handleMinHandleDrag(e.clientX)}
 					onDragEnd={(e) => handleMinHandleDrag(e.clientX)}
 					onDragStart={handleDragStart}
+					formatLabel={formatLabel}
 				/>
 				<SliderThumb
 					draggable={true}
@@ -81,13 +84,19 @@ export const MultiSlider = ({
 					onDrag={(e) => handleMaxHandleDrag(e.clientX)}
 					onDragEnd={(e) => handleMaxHandleDrag(e.clientX)}
 					onDragStart={handleDragStart}
+					formatLabel={formatLabel}
 				/>
 
 				{hint && <p className="text-sm text-gray-500 mt-1">{hint}</p>}
 				{error && <p className="text-sm text-red-500 mt-1">{error}</p>}
 			</div>
 			{showScale && (
-				<SliderDynamicScale min={min} max={max} stepLabels={step} />
+				<SliderDynamicScale
+					min={min}
+					max={max}
+					stepLabels={step}
+					formatLabel={formatLabel}
+				/>
 			)}
 		</>
 	);

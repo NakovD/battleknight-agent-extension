@@ -2,12 +2,14 @@ interface IDynamicScaleProps {
 	min: number;
 	max: number;
 	stepLabels?: number;
+	formatLabel: (value: number) => string;
 }
 
 export const SliderDynamicScale = ({
 	min,
 	max,
 	stepLabels = 10,
+	formatLabel,
 }: IDynamicScaleProps) => {
 	const markers = [];
 	for (let i = min; i <= max; i += stepLabels) {
@@ -30,7 +32,7 @@ export const SliderDynamicScale = ({
 						<div className="w-px h-2 bg-amber-500" />
 
 						<span className="text-xs text-amber-500 mt-1 tabular-nums">
-							{val}
+							{formatLabel(val)}
 						</span>
 					</div>
 				);
