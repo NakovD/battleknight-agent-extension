@@ -3,6 +3,4 @@ export interface IDuelsSliderSettings {
 	step: number;
 	min: number;
 	max: number;
-	minThreshold: number;
-	maxThreshold: number;
 }
