@@ -1,12 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import {
-	ChevronsLeft,
-	ChevronsRight,
-	CirclePlus,
-	Icon,
-	Trash2,
-} from "lucide-react";
-import { useState } from "react";
+import { ChevronsLeft, ChevronsRight, CirclePlus, Trash2 } from "lucide-react";
 import { IconButton } from "@/popup/components/common/button/iconButton/IconButton";
 import { Input } from "@/popup/components/common/form/Input";
 import { Label } from "@/popup/components/common/form/Label";
@@ -16,6 +9,7 @@ import { Toggle } from "@/popup/components/common/form/Toggle";
 import { Heading } from "@/popup/components/common/headings/Heading";
 import { Tooltip } from "@/popup/components/common/tooltip/Tooltip";
 import { sliderSettings } from "@/popup/features/duels/data/sliderSettings";
+import { useDuelsLootSliderSettings } from "@/popup/features/duels/hooks/useDuelsLootSliderSettings";
 import { withPreventDefaultAndCb } from "@/popup/utilities/domEventUtility";
 import { formatNumberAdvanced } from "@/popup/utilities/formatUtility";
 
@@ -26,30 +20,20 @@ export const Duels = () => {
 			skipWithOrder: false,
 			skipSpecificOrders: false,
 			specificOrders: [] as { name: string }[],
+			levels: [1, 30] as [number, number],
 		},
 		onSubmit: (values) => {
 			console.log(values);
 		},
 	});
 
-	const [lootSliderSettings, setLootSliderSettings] = useState({
-		...sliderSettings.at(2)!,
+	const {
+		lootSliderSettings,
+		handleLootValueSettingsPrev,
+		handleLootValueSettingsNext,
+	} = useDuelsLootSliderSettings({
+		handleSetFormValue: (value) => form.setFieldValue("maxLoot", value),
 	});
-
-	const handleSettingsUpdate = (
-		newSettings: (typeof sliderSettings)[number] | undefined,
-	) => {
-		if (newSettings && newSettings.id !== lootSliderSettings?.id) {
-			setLootSliderSettings(newSettings);
-			form.setFieldValue("maxLoot", newSettings.max / 2);
-		}
-	};
-
-	const handleLootValueSettingsPrev = () =>
-		handleSettingsUpdate(sliderSettings.at(lootSliderSettings.id - 1));
-
-	const handleLootValueSettingsNext = () =>
-		handleSettingsUpdate(sliderSettings.at(lootSliderSettings.id + 1));
 
 	return (
 		<form
@@ -59,11 +43,23 @@ export const Duels = () => {
 			<section className="border-none border-amber-700/50">
 				<Heading>Opponent's level</Heading>
 				<div className="pb-5" />
-				<Label>
-					From level to level
-					<div className="pb-7" />
-					<MultiSlider lowerValue={1} upperValue={12} />
-				</Label>
+				<form.Field
+					name="levels"
+					children={(field) => (
+						<Label>
+							From level to level
+							<div className="pb-7" />
+							<MultiSlider
+								lowerValue={field.state.value[0]}
+								upperValue={field.state.value[1]}
+								step={10}
+								onChange={(lowerValue, upperValue) =>
+									field.handleChange([lowerValue, upperValue])
+								}
+							/>
+						</Label>
+					)}
+				/>
 				<div className="pb-6" />
 			</section>
 			<section>
@@ -75,7 +71,7 @@ export const Duels = () => {
 					children={(field) => (
 						<Label className="relative">
 							Max loot
-							<div className="py-3.5" />
+							<div className="py-5" />
 							<Slider
 								value={field.state.value}
 								onChange={(e) => field.handleChange(e.target.valueAsNumber)}
@@ -111,6 +107,7 @@ export const Duels = () => {
 			</section>
 			<section>
 				<Heading>Order settings</Heading>
+				<div className="pb-5" />
 				<form.Field
 					name="skipWithOrder"
 					children={(field) => (
@@ -124,6 +121,7 @@ export const Duels = () => {
 						</Label>
 					)}
 				/>
+				<div className="pb-4" />
 				<div className="relative">
 					<form.Field
 						name="skipSpecificOrders"
