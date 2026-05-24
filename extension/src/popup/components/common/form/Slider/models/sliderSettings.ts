@@ -1,4 +1,4 @@
-export interface IDuelsSliderSettings {
+export interface ISliderSettings {
 	id: number;
 	step: number;
 	min: number;

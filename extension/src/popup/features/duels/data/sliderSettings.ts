@@ -1,6 +1,6 @@
-import type { IDuelsSliderSettings } from "@/popup/features/duels/models/duelsSliderSettings";
+import type { ISliderSettings } from "@/popup/components/common/form/Slider/models/sliderSettings";
 
-export const sliderSettings: IDuelsSliderSettings[] = [
+export const sliderSettings: ISliderSettings[] = [
 	{
 		id: 0,
 		max: 100_000,

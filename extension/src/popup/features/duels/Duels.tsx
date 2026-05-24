@@ -3,6 +3,8 @@ import { ChevronsLeft, ChevronsRight, CirclePlus, Trash2 } from "lucide-react";
 import { IconButton } from "@/popup/components/common/button/iconButton/IconButton";
 import { Input } from "@/popup/components/common/form/Input";
 import { Label } from "@/popup/components/common/form/Label";
+import { SliderSettingsNavigator } from "@/popup/components/common/form/Slider/components/SliderSettingsNavigator";
+import { useSliderSettings } from "@/popup/components/common/form/Slider/hooks/useSliderSettings";
 import { MultiSlider } from "@/popup/components/common/form/Slider/MultiSlider";
 import { Slider } from "@/popup/components/common/form/Slider/Slider";
 import { Toggle } from "@/popup/components/common/form/Toggle";
@@ -27,12 +29,9 @@ export const Duels = () => {
 		},
 	});
 
-	const {
-		lootSliderSettings,
-		handleLootValueSettingsPrev,
-		handleLootValueSettingsNext,
-	} = useDuelsLootSliderSettings({
-		handleSetFormValue: (value) => form.setFieldValue("maxLoot", value),
+	const lootSliderSettingsSetup = useDuelsLootSliderSettings({
+		handleLootValueChange: (newMaxLoot) =>
+			form.setFieldValue("maxLoot", newMaxLoot),
 	});
 
 	return (
@@ -75,35 +74,34 @@ export const Duels = () => {
 							<Slider
 								value={field.state.value}
 								onChange={(e) => field.handleChange(e.target.valueAsNumber)}
-								step={lootSliderSettings.step}
-								min={lootSliderSettings.min}
-								max={lootSliderSettings.max}
+								step={lootSliderSettingsSetup.lootSliderSettings.step}
+								min={lootSliderSettingsSetup.lootSliderSettings.min}
+								max={lootSliderSettingsSetup.lootSliderSettings.max}
 								showScale={false}
 								formatLabel={(value) => formatNumberAdvanced(value)}
 							/>
 							<p className="text-xs absolute -bottom-4 left-0">
-								{formatNumberAdvanced(lootSliderSettings.min)}
+								{formatNumberAdvanced(
+									lootSliderSettingsSetup.lootSliderSettings.min,
+								)}
 							</p>
 							<p className="text-xs absolute -bottom-4 right-0">
-								{formatNumberAdvanced(lootSliderSettings.max)}
+								{formatNumberAdvanced(
+									lootSliderSettingsSetup.lootSliderSettings.max,
+								)}
 							</p>
 						</Label>
 					)}
 				/>
-				<div className="flex items-center justify-center gap-10 pbs-3 pbe-5">
-					<IconButton
-						onClick={handleLootValueSettingsPrev}
-						disabled={lootSliderSettings.id === 0}
-					>
-						<ChevronsLeft className="text-amber-700/70" />
-					</IconButton>
-					<IconButton
-						onClick={handleLootValueSettingsNext}
-						disabled={lootSliderSettings.id === sliderSettings.length - 1}
-					>
-						<ChevronsRight className="text-amber-700/70" />
-					</IconButton>
-				</div>
+				<SliderSettingsNavigator
+					handlePrev={lootSliderSettingsSetup.handleLootValueSettingsPrev}
+					handleNext={lootSliderSettingsSetup.handleLootValueSettingsNext}
+					disabledPrev={lootSliderSettingsSetup.lootSliderSettings.id === 0}
+					disabledNext={
+						lootSliderSettingsSetup.lootSliderSettings.id ===
+						sliderSettings.length - 1
+					}
+				/>
 			</section>
 			<section>
 				<Heading>Order settings</Heading>
