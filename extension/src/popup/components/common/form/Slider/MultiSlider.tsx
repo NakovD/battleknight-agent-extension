@@ -15,6 +15,7 @@ interface IMultiSliderProps {
 	disabled?: boolean;
 	showScale?: boolean;
 	formatLabel?: (value: number) => string;
+	onChange: (lowerValue: number, upperValue: number) => void;
 }
 
 export const MultiSlider = ({
@@ -28,6 +29,7 @@ export const MultiSlider = ({
 	disabled,
 	showScale = true,
 	formatLabel = (val) => val.toString(),
+	onChange,
 }: IMultiSliderProps) => {
 	const {
 		minValue,
@@ -46,7 +48,9 @@ export const MultiSlider = ({
 		max,
 		step,
 		disabled,
+		onChange,
 	});
+
 	return (
 		<>
 			<div className="relative flex items-center h-5">

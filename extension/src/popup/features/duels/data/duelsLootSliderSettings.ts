@@ -1,6 +1,6 @@
 import type { ISliderSettings } from "@/popup/components/common/form/Slider/models/sliderSettings";
 
-export const sliderSettings: ISliderSettings[] = [
+export const duelsLootSliderSettings: ISliderSettings[] = [
 	{
 		id: 0,
 		max: 100_000,

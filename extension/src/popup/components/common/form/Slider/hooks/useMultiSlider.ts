@@ -14,6 +14,7 @@ interface IUseMultiSliderOptions {
 	max: number;
 	step: number;
 	disabled?: boolean;
+	onChange: (lowerValue: number, upperValue: number) => void;
 }
 
 export const useMultiSlider = ({
@@ -23,6 +24,7 @@ export const useMultiSlider = ({
 	max,
 	step,
 	disabled,
+	onChange,
 }: IUseMultiSliderOptions) => {
 	const [minValue, setMinValue] = useState(lowerValue);
 	const [maxValue, setMaxValue] = useState(upperValue);
@@ -80,9 +82,13 @@ export const useMultiSlider = ({
 
 		if (!shouldUpdate) return;
 
-		if (valueServed === "lower") return setMinValue(newHandlePosition);
+		if (valueServed === "lower") {
+			onChange(newHandlePosition, maxValue);
+			return setMinValue(newHandlePosition);
+		}
 
 		setMaxValue(newHandlePosition);
+		onChange(minValue, newHandlePosition);
 	};
 
 	const handleTrackClick = (clientX: number) => {
@@ -97,10 +103,12 @@ export const useMultiSlider = ({
 
 		if (distToMin < distToMax) {
 			setMinValue(newHandlePosition);
+			onChange(newHandlePosition, maxValue);
 			return;
 		}
 
 		setMaxValue(newHandlePosition);
+		onChange(minValue, newHandlePosition);
 	};
 
 	const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {

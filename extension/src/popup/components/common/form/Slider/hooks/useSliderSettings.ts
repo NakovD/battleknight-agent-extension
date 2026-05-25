@@ -1,22 +1,23 @@
 import { useState } from "react";
 import type { ISliderSettings } from "@/popup/components/common/form/Slider/models/sliderSettings";
-import { sliderSettings } from "@/popup/features/duels/data/sliderSettings";
 
 interface IUseSliderSettings {
+	allSettings: ISliderSettings[];
 	initialSliderSettings: ISliderSettings;
 	onSettingsChange?: (newSettings: ISliderSettings) => void;
 }
 
 export const useSliderSettings = ({
+	allSettings,
 	initialSliderSettings,
 	onSettingsChange,
 }: IUseSliderSettings) => {
-	const [lootSliderSettings, setLootSliderSettings] = useState({
+	const [sliderSettings, setLootSliderSettings] = useState({
 		...initialSliderSettings,
 	});
 
 	const handleSettingsUpdate = (newSettings: ISliderSettings | undefined) => {
-		if (newSettings && newSettings.id !== lootSliderSettings?.id) {
+		if (newSettings && newSettings.id !== sliderSettings?.id) {
 			setLootSliderSettings(newSettings);
 			onSettingsChange?.(newSettings);
 			return newSettings;
@@ -26,10 +27,10 @@ export const useSliderSettings = ({
 	};
 
 	return {
-		lootSliderSettings,
+		lootSliderSettings: sliderSettings,
 		handleLootValueSettingsPrev: () =>
-			handleSettingsUpdate(sliderSettings.at(lootSliderSettings.id - 1)),
+			handleSettingsUpdate(allSettings.at(sliderSettings.id - 1)),
 		handleLootValueSettingsNext: () =>
-			handleSettingsUpdate(sliderSettings.at(lootSliderSettings.id + 1)),
+			handleSettingsUpdate(allSettings.at(sliderSettings.id + 1)),
 	};
 };
