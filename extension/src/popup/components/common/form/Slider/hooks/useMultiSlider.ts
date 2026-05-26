@@ -1,4 +1,4 @@
-import { type ComponentRef, useRef, useState } from "react";
+import { type ComponentRef, useEffect, useRef, useState } from "react";
 
 type CalculateValueParams = {
 	clientX: number;
@@ -28,6 +28,11 @@ export const useMultiSlider = ({
 }: IUseMultiSliderOptions) => {
 	const [minValue, setMinValue] = useState(lowerValue);
 	const [maxValue, setMaxValue] = useState(upperValue);
+
+	useEffect(() => {
+		setMinValue(lowerValue);
+		setMaxValue(upperValue);
+	}, [lowerValue, upperValue]);
 
 	const bgRef = useRef<ComponentRef<"div">>(null);
 

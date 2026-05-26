@@ -10,21 +10,21 @@ export default function App() {
 			<Tabs>
 				<Tabs.List>
 					<Tabs.Tab
-						isActive={true}
+						isActive={activeTab === "duels"}
 						id="duels"
 						label="Duels"
 						icon="⚔"
 						onClick={() => setActiveTab("duels")}
 					/>
 					<Tabs.Tab
-						isActive={false}
+						isActive={activeTab === "missions"}
 						id="missions"
 						label="Missions"
 						icon="⚑"
 						onClick={() => setActiveTab("missions")}
 					/>
 					<Tabs.Tab
-						isActive={false}
+						isActive={activeTab === "settings"}
 						id="settings"
 						label="Settings"
 						icon="⚙"

@@ -4,7 +4,7 @@ export const duelsLevelSliderSettings: ISliderSettings[] = [
 	{
 		id: 0,
 		max: 50,
-		min: 1,
+		min: 0,
 		step: 5,
 	},
 	{
