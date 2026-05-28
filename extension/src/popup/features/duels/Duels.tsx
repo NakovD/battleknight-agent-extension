@@ -1,32 +1,35 @@
-import { useForm } from "@tanstack/react-form";
-import { ChevronsLeft, ChevronsRight, CirclePlus, Trash2 } from "lucide-react";
-import { IconButton } from "@/popup/components/common/button/iconButton/IconButton";
-import { Input } from "@/popup/components/common/form/Input";
 import { Label } from "@/popup/components/common/form/Label";
 import { SliderSettingsNavigator } from "@/popup/components/common/form/Slider/components/SliderSettingsNavigator";
-import { useSliderSettings } from "@/popup/components/common/form/Slider/hooks/useSliderSettings";
 import { MultiSlider } from "@/popup/components/common/form/Slider/MultiSlider";
 import { Slider } from "@/popup/components/common/form/Slider/Slider";
-import { Toggle } from "@/popup/components/common/form/Toggle";
 import { Heading } from "@/popup/components/common/headings/Heading";
 import { Tooltip } from "@/popup/components/common/tooltip/Tooltip";
-import { sliderSettings } from "@/popup/features/duels/data/sliderSettings";
+import { DuelsOrderSettings } from "@/popup/features/duels/components/DuelsOrderSettings";
+import { duelsFormDefaultValues } from "@/popup/features/duels/constants/duelsFormDefaultValues";
+import { duelsLevelSliderSettings } from "@/popup/features/duels/data/duelsLevelSliderSettings";
+import { duelsLootSliderSettings } from "@/popup/features/duels/data/duelsLootSliderSettings";
+import { useDuelsForm } from "@/popup/features/duels/form/duelsContext";
+import { useDuelsLevelSliderSettings } from "@/popup/features/duels/hooks/useDuelsLevelSliderSettings";
 import { useDuelsLootSliderSettings } from "@/popup/features/duels/hooks/useDuelsLootSliderSettings";
+import { duelsFormValidator } from "@/popup/features/duels/validators/duelsFormValidator";
 import { withPreventDefaultAndCb } from "@/popup/utilities/domEventUtility";
 import { formatNumberAdvanced } from "@/popup/utilities/formatUtility";
 
 export const Duels = () => {
-	const form = useForm({
-		defaultValues: {
-			maxLoot: 3_000_000,
-			skipWithOrder: false,
-			skipSpecificOrders: false,
-			specificOrders: [] as { name: string }[],
-			levels: [1, 30] as [number, number],
-		},
+	const form = useDuelsForm({
+		validators: { onChange: duelsFormValidator },
+		defaultValues: duelsFormDefaultValues,
 		onSubmit: (values) => {
 			console.log(values);
 		},
+	});
+
+	const levelSliderSettingsSetup = useDuelsLevelSliderSettings({
+		handleLootValueChange: (newSettings) =>
+			form.setFieldValue("levels", [
+				newSettings.min + newSettings.step,
+				newSettings.min + newSettings.step * 2,
+			] as [number, number]),
 	});
 
 	const lootSliderSettingsSetup = useDuelsLootSliderSettings({
@@ -51,13 +54,24 @@ export const Duels = () => {
 							<MultiSlider
 								lowerValue={field.state.value[0]}
 								upperValue={field.state.value[1]}
-								step={10}
+								step={levelSliderSettingsSetup.lootSliderSettings.step}
+								min={levelSliderSettingsSetup.lootSliderSettings.min}
+								max={levelSliderSettingsSetup.lootSliderSettings.max}
 								onChange={(lowerValue, upperValue) =>
 									field.handleChange([lowerValue, upperValue])
 								}
 							/>
 						</Label>
 					)}
+				/>
+				<SliderSettingsNavigator
+					handlePrev={levelSliderSettingsSetup.handleLootValueSettingsPrev}
+					handleNext={levelSliderSettingsSetup.handleLootValueSettingsNext}
+					disabledPrev={levelSliderSettingsSetup.lootSliderSettings.id === 0}
+					disabledNext={
+						levelSliderSettingsSetup.lootSliderSettings.id ===
+						duelsLevelSliderSettings.length - 1
+					}
 				/>
 				<div className="pb-6" />
 			</section>
@@ -99,95 +113,11 @@ export const Duels = () => {
 					disabledPrev={lootSliderSettingsSetup.lootSliderSettings.id === 0}
 					disabledNext={
 						lootSliderSettingsSetup.lootSliderSettings.id ===
-						sliderSettings.length - 1
+						duelsLootSliderSettings.length - 1
 					}
 				/>
 			</section>
-			<section>
-				<Heading>Order settings</Heading>
-				<div className="pb-5" />
-				<form.Field
-					name="skipWithOrder"
-					children={(field) => (
-						<Label htmlFor="skip-with-order">
-							Skip with order
-							<Toggle
-								id="skip-with-order"
-								onChange={() => field.handleChange(!field.state.value)}
-								value={field.state.value}
-							/>
-						</Label>
-					)}
-				/>
-				<div className="pb-4" />
-				<div className="relative">
-					<form.Field
-						name="skipSpecificOrders"
-						children={(field) => (
-							<Label htmlFor="skip-specific-orders">
-								Skip specific orders
-								<Toggle
-									id="skip-specific-orders"
-									onChange={() => field.handleChange(!field.state.value)}
-									value={field.state.value}
-								/>
-							</Label>
-						)}
-					/>
-					<form.Subscribe
-						selector={(state) => state.values.skipSpecificOrders}
-						children={(skipSpecificOrders) =>
-							skipSpecificOrders && (
-								<>
-									<div className="pb-3" />
-									<form.Field
-										name="specificOrders"
-										mode="array"
-										children={(arrayField) => (
-											<>
-												<IconButton
-													className="absolute top-6 right-0"
-													onClick={() => arrayField.pushValue({ name: "" })}
-												>
-													<CirclePlus width={20} height={20} />
-												</IconButton>
-												<div className="grid grid-flow-row gap-2">
-													{arrayField.state.value.map((_, index) => (
-														<form.Field
-															// biome-ignore lint/suspicious/noArrayIndexKey: Its fine in this case since we don't have any other unique identifier for the orders
-															key={index}
-															name={`specificOrders[${index}]`}
-															children={() => (
-																<Label
-																	className="flex items-center gap-4"
-																	htmlFor={`specificOrders[${index}]`}
-																>
-																	<Input
-																		id={`specificOrders[${index}]`}
-																		placeholder="Order name..."
-																	/>
-																	<IconButton
-																		className="shrink-0"
-																		onClick={() =>
-																			arrayField.removeValue(index)
-																		}
-																	>
-																		<Trash2 width={15} />
-																	</IconButton>
-																</Label>
-															)}
-														/>
-													))}
-												</div>
-											</>
-										)}
-									/>
-								</>
-							)
-						}
-					/>
-				</div>
-			</section>
+			<DuelsOrderSettings form={form} />
 			<Tooltip id="some-tooltip" popover="auto">
 				<p>Some tooltip content</p>
 			</Tooltip>
