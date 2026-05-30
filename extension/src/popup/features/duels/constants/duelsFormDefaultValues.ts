@@ -3,5 +3,6 @@ export const duelsFormDefaultValues = {
 	skipWithOrder: false,
 	skipSpecificOrders: false,
 	specificOrders: [] as { name: string }[],
-	levels: [1, 30],
+	levels: [0, 30],
+	page: { label: "Page 1-100", value: "0" },
 };

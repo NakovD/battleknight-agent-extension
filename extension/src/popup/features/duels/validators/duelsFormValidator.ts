@@ -5,5 +5,6 @@ export const duelsFormValidator = object({
 	skipWithOrder: boolean(),
 	skipSpecificOrders: boolean(),
 	specificOrders: array(object({ name: string() })).min(0),
-	levels: array(number().min(1)).length(2),
+	levels: array(number()).length(2),
+	page: object({ label: string(), value: string() }),
 });
