@@ -14,7 +14,6 @@ interface DropdownProps<T extends string = string> {
 	onChange: (value: DropdownOption<T>) => void;
 	onBlur?: () => void;
 	placeholder?: string;
-	label?: string;
 	hint?: string;
 	error?: string;
 	disabled?: boolean;
@@ -27,7 +26,6 @@ export const Dropdown = <T extends string = string>({
 	onChange,
 	onBlur,
 	placeholder = "Pick...",
-	label,
 	hint,
 	error,
 	disabled = false,
@@ -57,12 +55,6 @@ export const Dropdown = <T extends string = string>({
 
 	return (
 		<div className="flex flex-col gap-1 w-full">
-			{label && (
-				<span className="text-[10px] uppercase tracking-widest font-medium text-amber-600/70 font-serif">
-					{label}
-				</span>
-			)}
-
 			<details
 				ref={detailsRef}
 				onBlur={handleBlur}

@@ -1,4 +1,5 @@
 import { Tooltip } from "@/popup/components/common/tooltip/Tooltip";
+import { DuelsGeneralSettings } from "@/popup/features/duels/components/DuelsGeneralSettings";
 import { DuelsOpponentSettings } from "@/popup/features/duels/components/DuelsOpponentSettings";
 import { DuelsOrderSettings } from "@/popup/features/duels/components/DuelsOrderSettings";
 import { duelsFormDefaultValues } from "@/popup/features/duels/constants/duelsFormDefaultValues";
@@ -20,9 +21,11 @@ export const Duels = () => {
 			className="py-3"
 			onSubmit={withPreventDefaultAndCb(form.handleSubmit)}
 		>
+			<DuelsGeneralSettings form={form} />
 			<DuelsOpponentSettings form={form} />
 
 			<DuelsOrderSettings form={form} />
+
 			<Tooltip id="some-tooltip" popover="auto">
 				<p>Some tooltip content</p>
 			</Tooltip>
