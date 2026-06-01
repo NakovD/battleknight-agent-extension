@@ -1,3 +1,4 @@
+import { Button } from "@/popup/components/common/button/button/Button";
 import { Tooltip } from "@/popup/components/common/tooltip/Tooltip";
 import { DuelsGeneralSettings } from "@/popup/features/duels/components/DuelsGeneralSettings";
 import { DuelsOpponentSettings } from "@/popup/features/duels/components/DuelsOpponentSettings";
@@ -26,14 +27,21 @@ export const Duels = () => {
 
 			<DuelsOrderSettings form={form} />
 
-			<Tooltip id="some-tooltip" popover="auto">
+			<Tooltip id="submit-button-tooltip" popover="auto">
 				<p>Some tooltip content</p>
 			</Tooltip>
-			<button popoverTarget="some-tooltip" type="button">
-				sup
-			</button>
-
-			<button type="submit">submit bace</button>
+			<div className="py-2" />
+			<form.Subscribe
+				children={(state) => (
+					<Button
+						popoverTarget="submit-button-tooltip"
+						type="submit"
+						disabled={!(state.isFieldsValid && state.isDirty)}
+					>
+						Start extension
+					</Button>
+				)}
+			/>
 		</form>
 	);
 };
