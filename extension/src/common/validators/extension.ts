@@ -5,7 +5,7 @@ export const ExtensionStateSchema = object({
 	errorMessage: string().nullable(),
 });
 
-export const ExtensionMessageSchema = <T extends ZodType>(schema: T) =>
+export const getExtensionMessageSchema = <T extends ZodType>(schema: T) =>
 	discriminatedUnion("type", [
 		object({ type: literal("START_AGENT"), payload: schema }),
 		object({ type: literal("STOP_AGENT") }),
