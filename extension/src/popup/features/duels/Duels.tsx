@@ -1,47 +1,68 @@
-import { Button } from "@/popup/components/common/button/button/Button";
-import { Tooltip } from "@/popup/components/common/tooltip/Tooltip";
-import { DuelsGeneralSettings } from "@/popup/features/duels/components/DuelsGeneralSettings";
-import { DuelsOpponentSettings } from "@/popup/features/duels/components/DuelsOpponentSettings";
-import { DuelsOrderSettings } from "@/popup/features/duels/components/DuelsOrderSettings";
-import { duelsFormDefaultValues } from "@/popup/features/duels/constants/duelsFormDefaultValues";
-import { useDuelsForm } from "@/popup/features/duels/form/duelsContext";
-import { duelsFormValidator } from "@/popup/features/duels/validators/duelsFormValidator";
-import { withPreventDefaultAndCb } from "@/popup/utilities/domEventUtility";
+import { useEffect, useState } from "react";
+import { extensionMessenger } from "@/common/features/extensionMessenger";
+import type {
+	ExtensionMessage,
+	ExtensionMessageResponse,
+	ExtensionState,
+} from "@/common/models/extenstion";
+import { DuelsForm } from "@/popup/features/duels/components/DuelsForm";
+import type { DuelsForm as DuelsFormType } from "@/popup/features/duels/models/duelsForm";
+import type { duelsFormValidator } from "@/popup/features/duels/validators/duelsFormValidator";
 
 export const Duels = () => {
-	const form = useDuelsForm({
-		validators: { onChange: duelsFormValidator },
-		defaultValues: duelsFormDefaultValues,
-		onSubmit: (values) => {
-			console.log(values);
-		},
+	const [agentState, setAgentState] = useState<ExtensionState>({
+		status: "idle",
+		errorMessage: null,
 	});
 
+	useEffect(() => {
+		extensionMessenger.send({ type: "GET_STATUS" }).then((response) => {
+			if (response.ok) setAgentState(response.state);
+		});
+		chrome.runtime.sendMessage(
+			{ type: "GET_STATUS" },
+			(response: ExtensionMessageResponse) => {
+				if (response?.ok) setAgentState(response.state);
+			},
+		);
+	}, []);
+
+	useEffect(() => {
+		const handler = (msg: ExtensionMessage<typeof duelsFormValidator>) => {
+			if (msg.type === "STATUS_UPDATE") setAgentState(msg.payload);
+		};
+
+		chrome.runtime.onMessage.addListener(handler);
+
+		return () => chrome.runtime.onMessage.removeListener(handler);
+	}, []);
+
+	const handleSubmit = async (values: DuelsFormType) => {
+		const response = await extensionMessenger.send({
+			type: "START_AGENT",
+			payload: values,
+		});
+
+		if (response.ok) {
+			setAgentState(response.state);
+			return;
+		}
+		setAgentState({ status: "error", errorMessage: response.error });
+	};
+
+	const handleStop = () => {
+		chrome.runtime.sendMessage(
+			{ type: "STOP_AGENT" },
+			(response: ExtensionMessageResponse) => {
+				if (response?.ok) setAgentState(response.state);
+			},
+		);
+	};
+
 	return (
-		<form
-			className="py-3"
-			onSubmit={withPreventDefaultAndCb(form.handleSubmit)}
-		>
-			<DuelsGeneralSettings form={form} />
-			<DuelsOpponentSettings form={form} />
-
-			<DuelsOrderSettings form={form} />
-
-			<Tooltip id="submit-button-tooltip" popover="auto">
-				<p>Some tooltip content</p>
-			</Tooltip>
-			<div className="py-2" />
-			<form.Subscribe
-				children={(state) => (
-					<Button
-						popoverTarget="submit-button-tooltip"
-						type="submit"
-						disabled={!(state.isFieldsValid && state.isDirty)}
-					>
-						Start extension
-					</Button>
-				)}
-			/>
-		</form>
+		<>
+			<DuelsForm onSubmit={handleSubmit} />
+			<div />
+		</>
 	);
 };

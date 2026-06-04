@@ -6,7 +6,7 @@ export default function App() {
 	const [activeTab, setActiveTab] = useState("duels");
 
 	return (
-		<div className="p-11 min-w-3xl bg-gray-800">
+		<div className="p-11 min-w-2xl bg-gray-800">
 			<Tabs>
 				<Tabs.List>
 					<Tabs.Tab
