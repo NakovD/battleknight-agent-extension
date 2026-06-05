@@ -1,40 +1,31 @@
 import { useEffect, useState } from "react";
 import { extensionMessenger } from "@/common/features/extensionMessenger";
-import type {
-	ExtensionMessage,
-	ExtensionMessageResponse,
-	ExtensionState,
-} from "@/common/models/extenstion";
+import type { ExtensionState } from "@/common/models/extenstion";
 import { DuelsForm } from "@/popup/features/duels/components/DuelsForm";
+import { DuelsStatus } from "@/popup/features/duels/components/DuelsStatus";
+import { duelsInitialExtensionState } from "@/popup/features/duels/constants/duelsInitialExtensionState";
 import type { DuelsForm as DuelsFormType } from "@/popup/features/duels/models/duelsForm";
-import type { duelsFormValidator } from "@/popup/features/duels/validators/duelsFormValidator";
+import { duelsFormValidator } from "@/popup/features/duels/validators/duelsFormValidator";
 
 export const Duels = () => {
-	const [agentState, setAgentState] = useState<ExtensionState>({
-		status: "idle",
-		errorMessage: null,
-	});
+	const [extensionState, setExtensionState] = useState<ExtensionState>(
+		duelsInitialExtensionState,
+	);
 
 	useEffect(() => {
-		extensionMessenger.send({ type: "GET_STATUS" }).then((response) => {
-			if (response.ok) setAgentState(response.state);
-		});
-		chrome.runtime.sendMessage(
-			{ type: "GET_STATUS" },
-			(response: ExtensionMessageResponse) => {
-				if (response?.ok) setAgentState(response.state);
-			},
-		);
+		extensionMessenger
+			.send({ type: "GET_STATUS" })
+			.then((res) => {
+				if (res.ok) setExtensionState(res.state);
+				else setExtensionState({ status: "error", errorMessage: res.error });
+			})
+			.catch(() => {});
 	}, []);
 
 	useEffect(() => {
-		const handler = (msg: ExtensionMessage<typeof duelsFormValidator>) => {
-			if (msg.type === "STATUS_UPDATE") setAgentState(msg.payload);
-		};
-
-		chrome.runtime.onMessage.addListener(handler);
-
-		return () => chrome.runtime.onMessage.removeListener(handler);
+		return extensionMessenger.listen((msg) => {
+			if (msg.type === "STATUS_UPDATE") setExtensionState(msg.payload);
+		}, duelsFormValidator);
 	}, []);
 
 	const handleSubmit = async (values: DuelsFormType) => {
@@ -43,26 +34,35 @@ export const Duels = () => {
 			payload: values,
 		});
 
-		if (response.ok) {
-			setAgentState(response.state);
-			return;
-		}
-		setAgentState({ status: "error", errorMessage: response.error });
+		if (response.ok) setExtensionState(response.state);
+		else setExtensionState({ status: "error", errorMessage: response.error });
 	};
 
-	const handleStop = () => {
-		chrome.runtime.sendMessage(
-			{ type: "STOP_AGENT" },
-			(response: ExtensionMessageResponse) => {
-				if (response?.ok) setAgentState(response.state);
-			},
-		);
+	const handleStop = async () => {
+		const res = await extensionMessenger.send({ type: "STOP_AGENT" });
+		if (res.ok) setExtensionState(res.state);
+		else setExtensionState({ status: "error", errorMessage: res.error });
 	};
+
+	const isRunning = extensionState.status === "running";
 
 	return (
-		<>
-			<DuelsForm onSubmit={handleSubmit} />
-			<div />
-		</>
+		<div className="w-full">
+			{!isRunning && (
+				<DuelsStatus
+					settings={{
+						levelMax: 15,
+						levelMin: 1,
+						lootFilterEnabled: true,
+						lootMax: 1000,
+						skipAllOrders: true,
+						skipSpecificOrders: true,
+						ordersToSkip: ["dawdad", "dawdawd"],
+					}}
+					onStop={handleStop}
+				/>
+			)}
+			{isRunning && <DuelsForm onSubmit={handleSubmit} />}
+		</div>
 	);
 };
