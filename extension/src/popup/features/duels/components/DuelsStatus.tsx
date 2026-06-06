@@ -1,15 +1,6 @@
 import { Square } from "lucide-react";
+import type { IDuelsSettings } from "@/popup/features/duels/models/duelsSettings";
 import { formatNumberAdvanced } from "@/popup/utilities/formatUtility";
-
-interface IDuelsSettings {
-	levelMin: number;
-	levelMax: number;
-	lootFilterEnabled: boolean;
-	lootMax: number;
-	skipAllOrders: boolean;
-	skipSpecificOrders: boolean;
-	ordersToSkip: string[];
-}
 
 interface IDuelsStatusProps {
 	settings: IDuelsSettings;

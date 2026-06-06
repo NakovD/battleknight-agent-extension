@@ -9,9 +9,9 @@ import {
 	getExtensionMessageSchema,
 } from "@/common/validators/extension";
 
-export const extensionMessenger: IExtensionMessenger = {
-	send: <T extends ZodType>(msg: ExtensionMessage<T>) => {
-		return new Promise((resolve, reject) => {
+const extensionMessengerImplementation: IExtensionMessenger = {
+	send: <T extends ZodType>(msg: ExtensionMessage<T>) =>
+		new Promise((resolve, reject) => {
 			chrome.runtime.sendMessage<ExtensionMessage<T>, ExtensionMessageResponse>(
 				msg,
 				(raw) => {
@@ -28,8 +28,7 @@ export const extensionMessenger: IExtensionMessenger = {
 					resolve(result.data);
 				},
 			);
-		});
-	},
+		}),
 	listen: (handler, schema) => {
 		const listener = (raw: unknown) => {
 			const result = getExtensionMessageSchema(schema).safeParse(raw);
@@ -40,3 +39,21 @@ export const extensionMessenger: IExtensionMessenger = {
 		return () => chrome.runtime.onMessage.removeListener(listener);
 	},
 };
+
+const extensionMessengerMock: IExtensionMessenger = {
+	send: <T extends ZodType>(msg: ExtensionMessage<T>) =>
+		new Promise((resolve) => {
+			console.log("Mock send called with:", msg);
+			resolve({ state: { status: "running", errorMessage: "" }, ok: true });
+		}),
+	listen: (handler, schema) => {
+		console.log("Mock listen registered");
+		handler({
+			type: "STATUS_UPDATE",
+			payload: { status: "running", errorMessage: "" },
+		});
+		return () => console.log("Mock listen unregistered");
+	},
+};
+
+export const extensionMessenger = extensionMessengerMock; //extensionMessengerImplementation;

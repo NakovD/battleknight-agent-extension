@@ -33,7 +33,6 @@ export const DuelsForm = ({ onSubmit }: IDuelsFormProps) => {
 			<form.Subscribe
 				children={(state) => (
 					<Button
-						popoverTarget="submit-button-tooltip"
 						type="submit"
 						disabled={!(state.isFieldsValid && state.isDirty)}
 					>
