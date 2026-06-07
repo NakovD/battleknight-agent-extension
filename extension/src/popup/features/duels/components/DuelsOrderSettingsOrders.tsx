@@ -30,8 +30,8 @@ export const DuelsOrderSettingsOrders = withDuelsForm({
 											<form.Field
 												// biome-ignore lint/suspicious/noArrayIndexKey: Its fine in this case since we don't have any other unique identifier for the orders
 												key={index}
-												name={`specificOrders[${index}]`}
-												children={() => (
+												name={`specificOrders[${index}].name`}
+												children={(subfield) => (
 													<Label
 														className="flex items-center gap-4"
 														htmlFor={`specificOrders[${index}]`}
@@ -39,6 +39,10 @@ export const DuelsOrderSettingsOrders = withDuelsForm({
 														<Input
 															id={`specificOrders[${index}]`}
 															placeholder="Order name..."
+															value={subfield.state.value}
+															onChange={(e) =>
+																subfield.setValue(e.target.value)
+															}
 														/>
 														<IconButton
 															className="shrink-0"

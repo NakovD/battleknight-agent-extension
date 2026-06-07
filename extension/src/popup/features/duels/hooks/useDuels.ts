@@ -79,7 +79,12 @@ export const useDuels = () => {
 	const handleStop = async () => {
 		try {
 			const res = await extensionMessenger.send({ type: "STOP_AGENT" });
-			if (res.ok) setExtensionState({ ...res.state, settings: null });
+			if (res.ok)
+				setExtensionState({
+					status: "idle",
+					errorMessage: null,
+					settings: null,
+				});
 			else
 				setExtensionState({
 					status: "error",

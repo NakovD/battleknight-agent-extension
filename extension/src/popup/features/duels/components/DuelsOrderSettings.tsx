@@ -24,23 +24,32 @@ export const DuelsOrderSettings = withDuelsForm({
 					</Label>
 				)}
 			/>
-			<div className="pb-4" />
-			<div className="relative">
-				<form.Field
-					name="skipSpecificOrders"
-					children={(field) => (
-						<Label htmlFor="skip-specific-orders">
-							Skip specific orders
-							<Toggle
-								id="skip-specific-orders"
-								onChange={() => field.handleChange(!field.state.value)}
-								value={field.state.value}
-							/>
-						</Label>
-					)}
-				/>
-				<DuelsOrderSettingsOrders form={form} />
-			</div>
+			<form.Subscribe
+				selector={(state) => state.values.skipWithOrder}
+				children={(skipWithOrder) =>
+					skipWithOrder && (
+						<>
+							<div className="pb-4" />
+							<div className="relative">
+								<form.Field
+									name="skipSpecificOrders"
+									children={(field) => (
+										<Label htmlFor="skip-specific-orders">
+											Skip specific orders
+											<Toggle
+												id="skip-specific-orders"
+												onChange={() => field.handleChange(!field.state.value)}
+												value={field.state.value}
+											/>
+										</Label>
+									)}
+								/>
+								<DuelsOrderSettingsOrders form={form} />
+							</div>
+						</>
+					)
+				}
+			/>
 		</section>
 	),
 });
