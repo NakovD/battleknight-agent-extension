@@ -39,8 +39,6 @@ export const useDuels = () => {
 		}, duelsFormValidator);
 	}, []);
 
-	console.log(extensionState);
-
 	const handleSubmit = async (values: DuelsFormType) => {
 		try {
 			const response = await extensionMessenger.send({
@@ -100,10 +98,32 @@ export const useDuels = () => {
 		}
 	};
 
+	const handleRetry = async () => {
+		if (!extensionState.settings) return;
+		const res = await extensionMessenger.send({
+			type: "START_AGENT",
+			payload: extensionState.settings,
+		});
+		if (res.ok)
+			setExtensionState({ ...res.state, settings: extensionState.settings });
+	};
+
+	const handleBack = () => {
+		setExtensionState((prev) => ({
+			...prev,
+			status: "idle",
+			errorMessage: null,
+		}));
+	};
+
 	return {
 		isRunning: extensionState.status === "running",
+		isError: extensionState.status === "error",
 		duelsSettings: extensionState.settings,
+		errorMessage: extensionState.errorMessage,
 		handleSubmit,
 		handleStop,
+		handleRetry,
+		handleBack,
 	};
 };
