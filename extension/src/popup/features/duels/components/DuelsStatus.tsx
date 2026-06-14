@@ -1,9 +1,9 @@
 import { Square } from "lucide-react";
-import type { IDuelsSettings } from "@/popup/features/duels/models/duelsSettings";
+import type { DuelsSettings } from "@/common/features/duels/models/duelsSettings";
 import { formatNumberAdvanced } from "@/popup/utilities/formatUtility";
 
 interface IDuelsStatusProps {
-	settings: IDuelsSettings;
+	settings: DuelsSettings;
 	onStop: () => void;
 }
 

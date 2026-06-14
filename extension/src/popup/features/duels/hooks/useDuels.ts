@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
+import type { DuelsSettings } from "@/common/features/duels/models/duelsSettings";
 import { extensionMessenger } from "@/common/features/extensionMessenger";
 import type { ExtensionState } from "@/common/models/extenstion";
 import { duelsInitialExtensionState } from "@/popup/features/duels/constants/duelsInitialExtensionState";
 import type { DuelsForm as DuelsFormType } from "@/popup/features/duels/models/duelsForm";
-import type { IDuelsSettings } from "@/popup/features/duels/models/duelsSettings";
 import { duelsFormValidator } from "@/popup/features/duels/validators/duelsFormValidator";
 
 export const useDuels = () => {
 	const [extensionState, setExtensionState] = useState<
-		ExtensionState & { settings: IDuelsSettings | null }
+		ExtensionState & { settings: DuelsSettings | null }
 	>({ ...duelsInitialExtensionState, settings: null });
 
 	useEffect(() => {
