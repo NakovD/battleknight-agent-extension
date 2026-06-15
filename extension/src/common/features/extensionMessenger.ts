@@ -1,9 +1,9 @@
 import type { ZodType } from "zod";
-import type { IExtensionMessenger } from "@/common/models/extensionMessenger";
 import type {
 	ExtensionMessage,
 	ExtensionMessageResponse,
-} from "@/common/models/extenstion";
+} from "@/common/models/extension";
+import type { IExtensionMessenger } from "@/common/models/extensionMessenger";
 import {
 	ExtensionMessageResponseSchema,
 	getExtensionMessageSchema,

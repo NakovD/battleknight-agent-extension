@@ -1,11 +1,11 @@
 import type { infer as ZodInfer, ZodType } from "zod";
 import type {
 	ExtensionMessageResponseSchema,
-	ExtensionStateSchema,
+	extensionStateSchema,
 	getExtensionMessageSchema,
 } from "@/common/validators/extension";
 
-export type ExtensionState = ZodInfer<typeof ExtensionStateSchema>;
+export type ExtensionState = ZodInfer<typeof extensionStateSchema>;
 
 export type ExtensionMessage<T extends ZodType> = ZodInfer<
 	ReturnType<typeof getExtensionMessageSchema<T>>

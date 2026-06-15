@@ -1,4 +1,4 @@
-import type { ExtensionState } from "@/common/models/extenstion";
+import type { ExtensionState } from "@/common/models/extension";
 
 export const duelsInitialExtensionState: ExtensionState = {
 	status: "idle",

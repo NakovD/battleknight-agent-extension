@@ -2,7 +2,7 @@ import type { ZodType } from "zod";
 import type {
 	ExtensionMessage,
 	ExtensionMessageResponse,
-} from "@/common/models/extenstion";
+} from "@/common/models/extension";
 
 export interface IExtensionMessenger {
 	send: <T extends ZodType>(

@@ -1,6 +1,6 @@
 import { discriminatedUnion, literal, object, string, type ZodType } from "zod";
 
-export const ExtensionStateSchema = object({
+export const extensionStateSchema = object({
 	status: literal(["idle", "running", "error"]),
 	errorMessage: string().nullable(),
 });
@@ -10,10 +10,10 @@ export const getExtensionMessageSchema = <T extends ZodType>(schema: T) =>
 		object({ type: literal("START_AGENT"), payload: schema }),
 		object({ type: literal("STOP_AGENT") }),
 		object({ type: literal("GET_STATUS") }),
-		object({ type: literal("STATUS_UPDATE"), payload: ExtensionStateSchema }),
+		object({ type: literal("STATUS_UPDATE"), payload: extensionStateSchema }),
 	]);
 
 export const ExtensionMessageResponseSchema = discriminatedUnion("ok", [
-	object({ ok: literal(true), state: ExtensionStateSchema }),
+	object({ ok: literal(true), state: extensionStateSchema }),
 	object({ ok: literal(false), error: string() }),
 ]);

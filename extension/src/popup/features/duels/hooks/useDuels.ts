@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { DuelsSettings } from "@/common/features/duels/models/duelsSettings";
 import { extensionMessenger } from "@/common/features/extensionMessenger";
-import type { ExtensionState } from "@/common/models/extenstion";
+import type { ExtensionState } from "@/common/models/extension";
 import { duelsInitialExtensionState } from "@/popup/features/duels/constants/duelsInitialExtensionState";
 import type { DuelsForm as DuelsFormType } from "@/popup/features/duels/models/duelsForm";
 import { duelsFormValidator } from "@/popup/features/duels/validators/duelsFormValidator";
