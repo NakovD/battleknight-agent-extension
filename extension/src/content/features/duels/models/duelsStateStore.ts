@@ -8,7 +8,7 @@ import type { DuelsSettings } from "@/common/features/duels/models/duelsSettings
  * Имплементациите могат да четат/пишат локално (chrome.storage)
  * или отдалечено (.NET backend), без да се променя кодът който ги ползва.
  */
-export interface IAgentStateStore {
+export interface IDuelsStateStore {
 	/** Текущото пълно състояние. */
 	getState(): Promise<DuelsExtensionState>;
 
