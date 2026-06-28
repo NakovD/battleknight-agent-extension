@@ -3,4 +3,6 @@ import type { ExtensionState } from "@/common/models/extension";
 
 export type DuelsExtensionState = ExtensionState & {
 	settings: DuelsSettings | null;
+	attacksToday: number;
+	lastAttackAt: string | null;
 };

@@ -1,7 +1,7 @@
 import { ChromeStorageDuelsStateStore } from "@/content/features/duels/chromeStorageDuelsStateStore";
-import { DomDuelsEngine } from "@/content/features/duels/engines/domDuelsEngine";
+import { createDuelsEngine } from "@/content/features/duels/factory/duelsEngineFactory";
 
-const engine = new DomDuelsEngine();
+const engine = createDuelsEngine();
 const store = new ChromeStorageDuelsStateStore();
 
 /**
