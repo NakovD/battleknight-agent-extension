@@ -8,6 +8,8 @@ const INITIAL_STATE: DuelsExtensionState = {
 	status: "idle",
 	errorMessage: null,
 	settings: null,
+	attacksToday: 0,
+	lastAttackAt: null,
 };
 
 /**
