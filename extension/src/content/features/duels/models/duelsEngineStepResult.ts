@@ -5,4 +5,6 @@ export interface IDuelsEngineStepResult {
 	knightId?: string;
 	/** Колко да се изчака преди следващия runStep (ако е приложимо). */
 	waitMs?: number;
+	won?: boolean;
+	enemyName?: string;
 }
