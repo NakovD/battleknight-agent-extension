@@ -6,4 +6,5 @@ export type DuelsExtensionState = ExtensionState & {
 	attacksToday: number;
 	lastAttackAt: string | null;
 	waitUntil: number | null;
+	currentEnemyName: string | null;
 };

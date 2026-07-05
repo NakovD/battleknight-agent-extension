@@ -1,75 +1,137 @@
 import type { DuelsSettings } from "@/common/features/duels/models/duelsSettings";
-import type { IDuelsEngine } from "@/content/features/duels/models/duelsEngine";
+import type {
+	IDuelsEngine,
+	IDuelsStepContext,
+} from "@/content/features/duels/models/duelsEngine";
 import type { IDuelsEngineStepResult } from "@/content/features/duels/models/duelsEngineStepResult";
 
-const DEFAULT_COOLDOWN_MS = 30_000;
-const NO_TARGETS_WAIT_MS = 60_000;
+const RANKING_URL = "/highscore/";
+const DUEL_URL = "/duel/duel/?enemyID=";
 
-/**
- * DOM-базирана имплементация — чете класацията и атакува чрез DOM селектори.
- *
- * Чиста: не пипа chrome.storage, не управлява loop-ове или сесии.
- * Извиква се при всяко зареждане на content script-а, връща резултат,
- * extension/content/index.ts решава какво да прави с него.
- */
+// ─── Engine ───────────────────────────────────────────────────────────────────
+
 export class DomDuelsEngine implements IDuelsEngine {
-	async runStep(settings: DuelsSettings): Promise<IDuelsEngineStepResult> {
-		const page = detectPage();
+	async runStep(
+		settings: DuelsSettings,
+		context: IDuelsStepContext,
+	): Promise<IDuelsEngineStepResult> {
+		const page = detectPage(settings);
 
 		switch (page) {
-			case "ranking":
-				return this.handleRankingPage(settings);
+			case "ranking-unfiltered":
+				return this.handleRankingUnfiltered(settings);
+
+			case "ranking-ready":
+				return this.handleRankingReady(settings, context);
 
 			case "duel-result":
-				return this.handleDuelResultPage();
+				return this.handleDuelResult(settings, context);
 
 			case "unknown":
 			default:
-				// Неразпозната страница — навигирай към класацията
-				navigateToRanking();
+				navigateTo(RANKING_URL);
 				return { action: "navigated" };
 		}
 	}
 
-	// ── Страница: класация ────────────────────────────────────────────────────
+	// ── ranking-unfiltered: submit формата с правилен offset + сортиране ─────
 
-	private async handleRankingPage(
+	private handleRankingUnfiltered(
 		settings: DuelsSettings,
-	): Promise<IDuelsEngineStepResult> {
+	): IDuelsEngineStepResult {
+		const offsetSelect =
+			document.querySelector<HTMLSelectElement>("#highscoreOffset");
+		const sortButton = document.querySelector<HTMLElement>("#tooltipLevel a");
+
+		if (!offsetSelect || !sortButton) {
+			return { action: "waiting", waitMs: 5_000 };
+		}
+
+		offsetSelect.value = String(settings.rankingOffset);
+		sortButton.click();
+
+		return { action: "navigated" };
+	}
+
+	// ── ranking-ready: провери cooldown → scrape → филтрирай → атакувай ──────
+
+	private handleRankingReady(
+		settings: DuelsSettings,
+		context: IDuelsStepContext,
+	): IDuelsEngineStepResult {
+		// Cooldown все още не е изтекъл
+		if (context.waitUntil && Date.now() < context.waitUntil) {
+			return {
+				action: "waiting",
+				waitMs: context.waitUntil - Date.now(),
+			};
+		}
+
 		const knights = scrapeKnights();
 		const target = findFirstValidTarget(knights, settings);
 
 		if (!target) {
-			return { action: "waiting", waitMs: NO_TARGETS_WAIT_MS };
+			return { action: "done" };
 		}
 
-		// Навигира към страницата за атака — текущият content script ще умре тук
-		navigateToAttack(target.attackUrl);
-		return { action: "navigated", knightId: target.id };
+		const enemyId = extractEnemyId(target.profileUrl);
+		if (!enemyId) {
+			return { action: "done" };
+		}
+
+		navigateTo(`${DUEL_URL}${enemyId}`);
+		return { action: "navigated", knightId: target.id, enemyName: target.name };
 	}
 
-	// ── Страница: резултат от дуел ────────────────────────────────────────────
+	// ── duel-result: провери резултат → навигирай обратно ────────────────────
 
-	private async handleDuelResultPage(): Promise<IDuelsEngineStepResult> {
-		const cooldownMs = readCooldownTimer();
-		navigateToRanking();
-		return { action: "attacked", waitMs: cooldownMs ?? DEFAULT_COOLDOWN_MS };
+	private handleDuelResult(
+		settings: DuelsSettings,
+		context: IDuelsStepContext,
+	): IDuelsEngineStepResult {
+		const won = readDuelResult(context.currentEnemyName ?? undefined);
+
+		navigateTo(RANKING_URL);
+
+		return {
+			action: "attacked",
+			won,
+			waitMs: settings.cooldownMs,
+		};
 	}
 }
 
-// ─── Разпознаване на страницата ────────────────────────────────────────────────
+// ─── Разпознаване на страницата ───────────────────────────────────────────────
 
-type PageKind = "ranking" | "duel-result" | "unknown";
+type PageKind =
+	| "ranking-unfiltered"
+	| "ranking-ready"
+	| "duel-result"
+	| "unknown";
 
-function detectPage(): PageKind {
-	// TODO: попълни след инспекция на реалните URL-и / DOM маркери
-	if (window.location.href.includes("ranking")) return "ranking";
-	if (document.querySelector(".duel-result, [data-duel-result]"))
-		return "duel-result";
+function detectPage(settings: DuelsSettings): PageKind {
+	const path = window.location.pathname;
+
+	if (path.includes("/duel/duel")) return "duel-result";
+
+	if (path.includes("/highscore")) {
+		const offsetSelect =
+			document.querySelector<HTMLSelectElement>("#highscoreOffset");
+
+		if (
+			!offsetSelect ||
+			offsetSelect.value !== String(settings.rankingOffset)
+		) {
+			return "ranking-unfiltered";
+		}
+
+		return "ranking-ready";
+	}
+
 	return "unknown";
 }
 
-// ─── Scraping ──────────────────────────────────────────────────────────────────
+// ─── Scraping ─────────────────────────────────────────────────────────────────
 
 interface ScrapedKnight {
 	id: string;
@@ -77,61 +139,55 @@ interface ScrapedKnight {
 	level: number;
 	loot: number;
 	order: string | null;
-	attackUrl: string;
+	profileUrl: string;
 }
 
 function scrapeKnights(): ScrapedKnight[] {
-	const rows = document.querySelectorAll<HTMLElement>(
-		"[data-knight-row], .ranking-row, tr.knight",
+	const allRows = document.querySelectorAll<HTMLElement>(
+		"#highscoreTable tbody tr",
 	);
+	const knightRows = Array.from(allRows).slice(2);
 
 	const knights: ScrapedKnight[] = [];
-	rows.forEach((row) => {
+	knightRows.forEach((row) => {
 		const knight = parseKnightRow(row);
 		if (knight) knights.push(knight);
 	});
+
 	return knights;
 }
 
 function parseKnightRow(row: HTMLElement): ScrapedKnight | null {
-	const id =
-		row.dataset.knightId ??
-		row.dataset.id ??
-		row.querySelector<HTMLElement>("[data-id]")?.dataset.id;
-	if (!id) return null;
+	const playerTd = row.querySelector<HTMLElement>("td.playerName");
+	if (!playerTd) return null;
 
-	const name =
-		row
-			.querySelector<HTMLElement>(".knight-name, [data-name], .name")
-			?.innerText.trim() ?? "";
+	const profileAnchor =
+		playerTd.querySelector<HTMLAnchorElement>("a#playerLink");
+	if (!profileAnchor) return null;
+
+	const profileUrl = profileAnchor.href;
+	const name = profileAnchor.innerText.trim();
+
+	const enemyId = extractEnemyId(profileUrl);
+	if (!enemyId) return null;
+
+	// Орден — втори <a> в playerTd без id="playerLink"
+	const allAnchors = playerTd.querySelectorAll<HTMLAnchorElement>("a");
+	const orderAnchor = Array.from(allAnchors).find((a) => a.id !== "playerLink");
+	const order = orderAnchor?.innerText.trim() || null;
 
 	const levelText =
-		row
-			.querySelector<HTMLElement>(".knight-level, [data-level], .level")
-			?.innerText.trim() ?? "0";
+		row.querySelector<HTMLElement>("td.highscore05")?.innerText.trim() ?? "0";
 	const level = parseInt(levelText.replace(/\D/g, ""), 10) || 0;
 
 	const lootText =
-		row
-			.querySelector<HTMLElement>(".loot, [data-loot], .silver, .prize")
-			?.innerText.trim() ?? "0";
+		row.querySelector<HTMLElement>("td.highscore06")?.innerText.trim() ?? "0";
 	const loot = parseInt(lootText.replace(/\D/g, ""), 10) || 0;
 
-	const order =
-		row
-			.querySelector<HTMLElement>(".order-name, [data-order], .guild")
-			?.innerText.trim() || null;
-
-	const attackAnchor = row.querySelector<HTMLAnchorElement>(
-		"a.attack, a[href*='attack'], a[href*='duel'], button[data-attack]",
-	);
-	const attackUrl = attackAnchor?.href ?? "";
-	if (!attackUrl) return null;
-
-	return { id, name, level, loot, order, attackUrl };
+	return { id: enemyId, name, level, loot, order, profileUrl };
 }
 
-// ─── Филтриране ──────────────────────────────────────────────────────────────
+// ─── Филтриране ───────────────────────────────────────────────────────────────
 
 function findFirstValidTarget(
 	knights: ScrapedKnight[],
@@ -153,36 +209,35 @@ function findFirstValidTarget(
 	);
 }
 
-// ─── Навигация ──────────────────────────────────────────────────────────────────
+// ─── Резултат от дуел ─────────────────────────────────────────────────────────
 
-function navigateToRanking(): void {
-	// TODO: попълни реалния URL
-	window.location.href = "/ranking";
-}
-
-function navigateToAttack(attackUrl: string): void {
-	window.location.href = attackUrl;
-}
-
-// ─── Cooldown ──────────────────────────────────────────────────────────────────
-
-function readCooldownTimer(): number | null {
-	const timerEl = document.querySelector<HTMLElement>(
-		"#duel_timer, .cooldown-timer, [data-cooldown], .next-duel-time",
+/**
+ * Чете победителя от h1 em в #fightResultContainer.
+ * Ако enemyName е в текста → противникът е победил → загуба.
+ * Ако не → потребителят е победил.
+ */
+function readDuelResult(enemyName?: string): boolean {
+	const resultEl = document.querySelector<HTMLElement>(
+		"#fightResultContainer .fightResultsInner h1 em",
 	);
-	if (!timerEl) return null;
 
-	const text = timerEl.innerText.trim();
+	if (!resultEl || !enemyName) return false;
 
-	const mmss = text.match(/(\d+):(\d+)/);
-	if (mmss) {
-		const minutes = parseInt(mmss[1], 10);
-		const seconds = parseInt(mmss[2], 10);
-		return (minutes * 60 + seconds) * 1_000 + 1_000;
-	}
+	return !resultEl.innerText.trim().includes(enemyName);
+}
 
-	const sec = parseInt(text.replace(/\D/g, ""), 10);
-	if (!isNaN(sec) && sec > 0) return sec * 1_000 + 1_000;
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-	return null;
+/**
+ * Извлича enemyID от URL:
+ * https://s26-bg.battleknight.gameforge.com:443/common/profile/344255/Scores/Player
+ *                                                               ^^^^^^
+ */
+function extractEnemyId(profileUrl: string): string | null {
+	const match = profileUrl.match(/\/profile\/(\d+)\//);
+	return match?.[1] ?? null;
+}
+
+function navigateTo(path: string): void {
+	window.location.href = path;
 }

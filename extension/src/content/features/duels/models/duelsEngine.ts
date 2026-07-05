@@ -9,5 +9,13 @@ import type { IDuelsEngineStepResult } from "@/content/features/duels/models/due
  * проверка дали трябва да се извика, и за записване на резултата.
  */
 export interface IDuelsEngine {
-	runStep(settings: DuelsSettings): Promise<IDuelsEngineStepResult>;
+	runStep(
+		settings: DuelsSettings,
+		context?: IDuelsStepContext,
+	): Promise<IDuelsEngineStepResult>;
+}
+
+export interface IDuelsStepContext {
+	currentEnemyName: string | null;
+	waitUntil: number | null;
 }
