@@ -13,7 +13,7 @@ const store = new ChromeStorageDuelsStateStore();
  * 3. Изпълнява една стъпка от DomDuelsEngine
  * 4. Записва резултата обратно в storage
  */
-export async function runAgentStep(): Promise<void> {
+export const runAgentStep = async (): Promise<void> => {
 	const running = await store.isRunning();
 	if (!running) return;
 
@@ -81,4 +81,4 @@ export async function runAgentStep(): Promise<void> {
 			waitUntil: null,
 		});
 	}
-}
+};
