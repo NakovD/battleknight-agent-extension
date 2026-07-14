@@ -1,12 +1,10 @@
 import type { DuelsSettings } from "@/common/features/duels/models/duelsSettings";
+import { domDuelsEngineConstants } from "@/content/features/duels/constants/domDuelsEngineConstants";
 import type {
 	IDuelsEngine,
 	IDuelsStepContext,
 } from "@/content/features/duels/models/duelsEngine";
 import type { IDuelsEngineStepResult } from "@/content/features/duels/models/duelsEngineStepResult";
-
-const RANKING_URL = "/highscore/";
-const DUEL_URL = "/duel/duel/?enemyID=";
 
 // ─── Engine ───────────────────────────────────────────────────────────────────
 
@@ -29,7 +27,7 @@ export class DomDuelsEngine implements IDuelsEngine {
 
 			case "unknown":
 			default:
-				navigateTo(RANKING_URL);
+				navigateTo(domDuelsEngineConstants.rankingUrl);
 				return { action: "navigated" };
 		}
 	}
@@ -79,7 +77,7 @@ export class DomDuelsEngine implements IDuelsEngine {
 			return { action: "done" };
 		}
 
-		navigateTo(`${DUEL_URL}${enemyId}`);
+		navigateTo(`${domDuelsEngineConstants.duelUrl}${enemyId}`);
 		return { action: "navigated", knightId: target.id, enemyName: target.name };
 	}
 
@@ -91,7 +89,7 @@ export class DomDuelsEngine implements IDuelsEngine {
 	): IDuelsEngineStepResult {
 		const won = readDuelResult(context.currentEnemyName ?? undefined);
 
-		navigateTo(RANKING_URL);
+		navigateTo(domDuelsEngineConstants.rankingUrl);
 
 		return {
 			action: "attacked",
