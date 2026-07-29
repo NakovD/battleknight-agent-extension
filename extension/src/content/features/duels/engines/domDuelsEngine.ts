@@ -164,7 +164,7 @@ function parseKnightRow(row: HTMLElement): ScrapedKnight | null {
 	if (!profileAnchor) return null;
 
 	const profileUrl = profileAnchor.href;
-	const name = profileAnchor.innerText.trim();
+	const name = (profileAnchor.textContent ?? "").trim();
 
 	const enemyId = extractEnemyId(profileUrl);
 	if (!enemyId) return null;
@@ -172,14 +172,14 @@ function parseKnightRow(row: HTMLElement): ScrapedKnight | null {
 	// Орден — втори <a> в playerTd без id="playerLink"
 	const allAnchors = playerTd.querySelectorAll<HTMLAnchorElement>("a");
 	const orderAnchor = Array.from(allAnchors).find((a) => a.id !== "playerLink");
-	const order = orderAnchor?.innerText.trim() || null;
+	const order = orderAnchor?.textContent?.trim() || null;
 
 	const levelText =
-		row.querySelector<HTMLElement>("td.highscore05")?.innerText.trim() ?? "0";
+		row.querySelector<HTMLElement>("td.highscore05")?.textContent?.trim() ?? "0";
 	const level = parseInt(levelText.replace(/\D/g, ""), 10) || 0;
 
 	const lootText =
-		row.querySelector<HTMLElement>("td.highscore06")?.innerText.trim() ?? "0";
+		row.querySelector<HTMLElement>("td.highscore06")?.textContent?.trim() ?? "0";
 	const loot = parseInt(lootText.replace(/\D/g, ""), 10) || 0;
 
 	return { id: enemyId, name, level, loot, order, profileUrl };
@@ -221,7 +221,7 @@ function readDuelResult(enemyName?: string): boolean {
 
 	if (!resultEl || !enemyName) return false;
 
-	return !resultEl.innerText.trim().includes(enemyName);
+	return !(resultEl.textContent ?? "").trim().includes(enemyName);
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
