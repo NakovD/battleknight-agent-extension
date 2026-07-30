@@ -1,10 +1,27 @@
 import { useEffect, useState } from "react";
 import type { DuelsSettings } from "@/common/features/duels/models/duelsSettings";
+import { duelsSettingsValidator } from "@/common/features/duels/validators/duelsSettingsValidator";
 import { extensionMessenger } from "@/common/features/extensionMessenger";
 import type { ExtensionState } from "@/common/models/extension";
 import { duelsInitialExtensionState } from "@/popup/features/duels/constants/duelsInitialExtensionState";
 import type { DuelsForm as DuelsFormType } from "@/popup/features/duels/models/duelsForm";
-import { duelsFormValidator } from "@/popup/features/duels/validators/duelsFormValidator";
+
+// TODO: формата все още няма полета за тях — засега фиксирани стойности,
+// докато не се добави контрол за скорост на сървъра/страница в класацията.
+const DEFAULT_COOLDOWN_MS = 120_000;
+const DEFAULT_RANKING_OFFSET = 0;
+
+const mapFormToSettings = (values: DuelsFormType): DuelsSettings => ({
+	levelMin: values.levels[0],
+	levelMax: values.levels[1],
+	lootFilterEnabled: true,
+	lootMax: values.maxLoot,
+	skipAllOrders: values.skipWithOrder,
+	skipSpecificOrders: values.skipSpecificOrders,
+	ordersToSkip: values.specificOrders.map((o) => o.name),
+	cooldownMs: DEFAULT_COOLDOWN_MS,
+	rankingOffset: DEFAULT_RANKING_OFFSET,
+});
 
 export const useDuels = () => {
 	const [extensionState, setExtensionState] = useState<
@@ -15,13 +32,14 @@ export const useDuels = () => {
 		extensionMessenger
 			.send({ type: "GET_STATUS" })
 			.then((res) => {
-				// if (res.ok) setExtensionState({ ...res.state, settings: null });
-				// else
-				// 	setExtensionState({
-				// 		status: "error",
-				// 		errorMessage: res.error,
-				// 		settings: null,
-				// 	});
+				if (res.ok)
+					setExtensionState((prev) => ({ ...res.state, settings: prev.settings }));
+				else
+					setExtensionState({
+						status: "error",
+						errorMessage: res.error,
+						settings: null,
+					});
 			})
 			.catch((message: string) =>
 				setExtensionState({
@@ -34,31 +52,21 @@ export const useDuels = () => {
 
 	useEffect(() => {
 		return extensionMessenger.listen((msg) => {
-			// if (msg.type === "STATUS_UPDATE")
-			// 	setExtensionState({ ...msg.payload, settings: null });
-		}, duelsFormValidator);
+			if (msg.type === "STATUS_UPDATE")
+				setExtensionState((prev) => ({ ...msg.payload, settings: prev.settings }));
+		}, duelsSettingsValidator);
 	}, []);
 
 	const handleSubmit = async (values: DuelsFormType) => {
 		try {
+			const settings = mapFormToSettings(values);
 			const response = await extensionMessenger.send({
 				type: "START_AGENT",
-				payload: values,
+				payload: settings,
 			});
 
 			if (response.ok)
-				setExtensionState({
-					...response.state,
-					settings: {
-						levelMin: values.levels[0],
-						levelMax: values.levels[1],
-						lootFilterEnabled: true,
-						lootMax: values.maxLoot,
-						skipAllOrders: values.skipWithOrder,
-						skipSpecificOrders: values.skipSpecificOrders,
-						ordersToSkip: values.specificOrders.map((o) => o.name),
-					},
-				});
+				setExtensionState({ ...response.state, settings });
 			else
 				setExtensionState({
 					status: "error",

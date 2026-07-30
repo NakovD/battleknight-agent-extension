@@ -1,15 +1,12 @@
-import { duelsConstants } from "@/background/features/duels/constant/duelsConstants";
 import type { IDuelsExtensionController } from "@/background/features/duels/models/duelsExtensionController.ts ";
+import {
+	DUELS_INITIAL_EXTENSION_STATE,
+	DUELS_STORAGE_KEY,
+} from "@/common/features/duels/constants/duelsStateConstants";
 import type { DuelsExtensionState } from "@/common/features/duels/models/duelsExtensionState";
 import type { DuelsSettings } from "@/common/features/duels/models/duelsSettings";
 
 type ControllerState = DuelsExtensionState;
-
-const INITIAL_STATE: ControllerState = {
-	status: "idle",
-	errorMessage: null,
-	settings: null,
-};
 
 /**
  * Пази състоянието на агента в chrome.storage.local.
@@ -23,9 +20,9 @@ export class ChromeStorageAgentController implements IDuelsExtensionController {
 		// (напр. от content script-а, който пише там директно)
 		chrome.storage.onChanged.addListener((changes, areaName) => {
 			if (areaName !== "local") return;
-			if (!(duelsConstants.storageKey in changes)) return;
+			if (!(DUELS_STORAGE_KEY in changes)) return;
 
-			const newState = changes[duelsConstants.storageKey].newValue as
+			const newState = changes[DUELS_STORAGE_KEY].newValue as
 				| ControllerState
 				| undefined;
 			if (newState) this.notify(newState);
@@ -35,7 +32,9 @@ export class ChromeStorageAgentController implements IDuelsExtensionController {
 	// ── Публични методи ──────────────────────────────────────────────────────
 
 	async start(settings: DuelsSettings): Promise<void> {
+		const current = await this.read();
 		const next: ControllerState = {
+			...current,
 			status: "running",
 			errorMessage: null,
 			settings,
@@ -46,9 +45,9 @@ export class ChromeStorageAgentController implements IDuelsExtensionController {
 	async stop(): Promise<void> {
 		const current = await this.read();
 		const next: ControllerState = {
+			...current,
 			status: "idle",
 			errorMessage: null,
-			settings: current.settings,
 		};
 		await this.write(next);
 	}
@@ -75,10 +74,10 @@ export class ChromeStorageAgentController implements IDuelsExtensionController {
 
 	private read(): Promise<ControllerState> {
 		return new Promise((resolve) => {
-			chrome.storage.local.get(duelsConstants.storageKey, (result) => {
+			chrome.storage.local.get(DUELS_STORAGE_KEY, (result) => {
 				resolve(
-					(result[duelsConstants.storageKey] as ControllerState) ??
-						INITIAL_STATE,
+					(result[DUELS_STORAGE_KEY] as ControllerState) ??
+						DUELS_INITIAL_EXTENSION_STATE,
 				);
 			});
 		});
@@ -86,7 +85,7 @@ export class ChromeStorageAgentController implements IDuelsExtensionController {
 
 	private write(state: ControllerState): Promise<void> {
 		return new Promise((resolve) => {
-			chrome.storage.local.set({ [duelsConstants.storageKey]: state }, () => {
+			chrome.storage.local.set({ [DUELS_STORAGE_KEY]: state }, () => {
 				this.notify(state);
 				resolve();
 			});

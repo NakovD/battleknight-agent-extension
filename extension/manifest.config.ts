@@ -15,9 +15,13 @@ export default defineManifest({
 		default_popup: "src/popup/index.html",
 	},
 	permissions: ["sidePanel", "contentSettings", "storage"],
+	background: {
+		service_worker: "src/background/index.ts",
+		type: "module",
+	},
 	content_scripts: [
 		{
-			js: ["src/content/main.tsx"],
+			js: ["src/content/index.ts"],
 			matches: ["https://*.battleknight.gameforge.com/*"],
 		},
 	],

@@ -1,16 +1,10 @@
+import {
+	DUELS_INITIAL_EXTENSION_STATE,
+	DUELS_STORAGE_KEY,
+} from "@/common/features/duels/constants/duelsStateConstants";
 import type { DuelsExtensionState } from "@/common/features/duels/models/duelsExtensionState";
 import type { DuelsSettings } from "@/common/features/duels/models/duelsSettings";
 import type { IDuelsStateStore } from "@/content/features/duels/models/duelsStateStore";
-
-const STORAGE_KEY = "agentState";
-
-const INITIAL_STATE: DuelsExtensionState = {
-	status: "idle",
-	errorMessage: null,
-	settings: null,
-	attacksToday: 0,
-	lastAttackAt: null,
-};
 
 /**
  * Чете/пише състоянието на агента в chrome.storage.local.
@@ -20,8 +14,11 @@ const INITIAL_STATE: DuelsExtensionState = {
 export class ChromeStorageDuelsStateStore implements IDuelsStateStore {
 	async getState(): Promise<DuelsExtensionState> {
 		return new Promise((resolve) => {
-			chrome.storage.local.get(STORAGE_KEY, (result) => {
-				resolve((result[STORAGE_KEY] as DuelsExtensionState) ?? INITIAL_STATE);
+			chrome.storage.local.get(DUELS_STORAGE_KEY, (result) => {
+				resolve(
+					(result[DUELS_STORAGE_KEY] as DuelsExtensionState) ??
+						DUELS_INITIAL_EXTENSION_STATE,
+				);
 			});
 		});
 	}
@@ -40,7 +37,7 @@ export class ChromeStorageDuelsStateStore implements IDuelsStateStore {
 		const current = await this.getState();
 		const next: DuelsExtensionState = { ...current, ...patch };
 		return new Promise((resolve) => {
-			chrome.storage.local.set({ [STORAGE_KEY]: next }, () => resolve());
+			chrome.storage.local.set({ [DUELS_STORAGE_KEY]: next }, () => resolve());
 		});
 	}
 }
