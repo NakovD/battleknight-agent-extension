@@ -6,10 +6,7 @@ import type { ExtensionState } from "@/common/models/extension";
 import { duelsInitialExtensionState } from "@/popup/features/duels/constants/duelsInitialExtensionState";
 import type { DuelsForm as DuelsFormType } from "@/popup/features/duels/models/duelsForm";
 
-// TODO: формата все още няма полета за тях — засега фиксирани стойности,
-// докато не се добави контрол за скорост на сървъра/страница в класацията.
-const DEFAULT_COOLDOWN_MS = 120_000;
-const DEFAULT_RANKING_OFFSET = 0;
+const RANKING_PAGE_SIZE = 100;
 
 const mapFormToSettings = (values: DuelsFormType): DuelsSettings => ({
 	levelMin: values.levels[0],
@@ -19,8 +16,8 @@ const mapFormToSettings = (values: DuelsFormType): DuelsSettings => ({
 	skipAllOrders: values.skipWithOrder,
 	skipSpecificOrders: values.skipSpecificOrders,
 	ordersToSkip: values.specificOrders.map((o) => o.name),
-	cooldownMs: DEFAULT_COOLDOWN_MS,
-	rankingOffset: DEFAULT_RANKING_OFFSET,
+	cooldownMs: values.cooldownMinutes * 60_000,
+	rankingOffset: Number(values.page.value) * RANKING_PAGE_SIZE,
 });
 
 export const useDuels = () => {

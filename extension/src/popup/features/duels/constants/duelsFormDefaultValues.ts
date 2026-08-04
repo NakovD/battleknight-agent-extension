@@ -7,4 +7,5 @@ export const duelsFormDefaultValues = {
 	specificOrders: [] as { name: string }[],
 	levels: [0, 30],
 	page: duelsFormPagesOptions[0],
+	cooldownMinutes: 2,
 };

@@ -7,4 +7,5 @@ export const duelsFormValidator = object({
 	specificOrders: array(object({ name: string() })).min(0),
 	levels: array(number()).length(2),
 	page: object({ label: string(), value: string() }),
+	cooldownMinutes: number().min(1, "Cooldown must be at least 1 minute"),
 });
