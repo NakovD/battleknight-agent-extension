@@ -8,7 +8,10 @@ const messageSchema = getExtensionMessageSchema(duelsSettingsValidator);
 
 chrome.runtime.onMessage.addListener((raw, _sender, sendResponse) => {
 	const parsed = messageSchema.safeParse(raw);
-	if (!parsed.success) return false;
+	if (!parsed.success) {
+		console.error("[background] Отхвърлено съобщение:", raw, parsed.error);
+		return false;
+	}
 
 	const message = parsed.data;
 

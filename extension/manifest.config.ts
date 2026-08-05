@@ -16,7 +16,7 @@ export default defineManifest({
 	},
 	permissions: ["sidePanel", "contentSettings", "storage"],
 	background: {
-		service_worker: "src/background/index.ts",
+		service_worker: "src/background/main.ts",
 		type: "module",
 	},
 	content_scripts: [
