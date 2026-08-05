@@ -24,6 +24,20 @@ export default defineConfig({
 		zip({ outDir: "release", outFileName: `crx-${name}-${version}.zip` }),
 		tailwindcss(),
 	],
+	build: {
+		rollupOptions: {
+			output: {
+				// Popup и sidepanel и двата зареждат React — без това Rollup
+				// дублира React в отделните entry chunk-ове (popup/sidepanel),
+				// което води до два инстанцирани копия и "useState of null" крашове.
+				manualChunks(id) {
+					if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) {
+						return "vendor-react";
+					}
+				},
+			},
+		},
+	},
 	server: {
 		cors: {
 			origin: [/chrome-extension:\/\//],
