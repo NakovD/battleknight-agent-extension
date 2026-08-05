@@ -104,11 +104,11 @@ describe("DomDuelsEngine", () => {
 
 			const result = await engine.runStep(defaultSettings, defaultContext);
 
-			// При ranking-unfiltered кликва бутона и връща navigated
+			// При ranking-unfiltered сменя offset-а и връща navigated
 			expect(result.action).toBe("navigated");
 		});
 
-		it("връща waiting ако липсва #highscoreOffset или #tooltipLevel", async () => {
+		it("връща waiting ако липсва #highscoreOffset", async () => {
 			setPathname("/highscore/");
 			document.body.innerHTML = ""; // празен DOM
 
@@ -169,23 +169,23 @@ describe("DomDuelsEngine", () => {
 	// ── handleRankingUnfiltered ───────────────────────────────────────────────
 
 	describe("handleRankingUnfiltered", () => {
-		it("задава правилния offset и кликва бутона за сортиране", async () => {
+		it("задава правилния offset и пуска change event", async () => {
 			setPathname("/highscore/");
 			buildRankingDOM("100", []); // грешен offset
 
-			const sortButton =
-				document.querySelector<HTMLElement>("#tooltipLevel a")!;
-			const clickSpy = vi.spyOn(sortButton, "click");
+			const select =
+				document.querySelector<HTMLSelectElement>("#highscoreOffset")!;
+			const changeHandler = vi.fn();
+			select.addEventListener("change", changeHandler);
 
-			await engine.runStep(
+			const result = await engine.runStep(
 				{ ...defaultSettings, rankingOffset: 0 },
 				defaultContext,
 			);
 
-			const select =
-				document.querySelector<HTMLSelectElement>("#highscoreOffset")!;
 			expect(select.value).toBe("0");
-			expect(clickSpy).toHaveBeenCalledOnce();
+			expect(changeHandler).toHaveBeenCalledOnce();
+			expect(result.action).toBe("navigated");
 		});
 	});
 

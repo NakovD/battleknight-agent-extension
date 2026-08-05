@@ -15,6 +15,14 @@ export class DomDuelsEngine implements IDuelsEngine {
 	): Promise<IDuelsEngineStepResult> {
 		const page = detectPage(settings);
 
+		console.log("[DomDuelsEngine] page:", page, {
+			pathname: window.location.pathname,
+			offsetSelectValue: document.querySelector<HTMLSelectElement>(
+				"#highscoreOffset",
+			)?.value,
+			rankingOffset: settings.rankingOffset,
+		});
+
 		switch (page) {
 			case "ranking-unfiltered":
 				return this.handleRankingUnfiltered(settings);
@@ -32,21 +40,24 @@ export class DomDuelsEngine implements IDuelsEngine {
 		}
 	}
 
-	// ── ranking-unfiltered: submit формата с правилен offset + сортиране ─────
+	// ── ranking-unfiltered: смени offset-а на класацията ─────────────────────
 
 	private handleRankingUnfiltered(
 		settings: DuelsSettings,
 	): IDuelsEngineStepResult {
 		const offsetSelect =
 			document.querySelector<HTMLSelectElement>("#highscoreOffset");
-		const sortButton = document.querySelector<HTMLElement>("#tooltipLevel a");
 
-		if (!offsetSelect || !sortButton) {
+		if (!offsetSelect) {
 			return { action: "waiting", waitMs: 5_000 };
 		}
 
 		offsetSelect.value = String(settings.rankingOffset);
-		sortButton.click();
+		// Задаването на .value не пуска `change` event само по себе си —
+		// сайтът има onchange handler на селекта, който сам презарежда
+		// страницата с новия offset. Допълнителен click върху друг елемент
+		// тук само надбягва/чупи тази навигация.
+		offsetSelect.dispatchEvent(new Event("change", { bubbles: true }));
 
 		return { action: "navigated" };
 	}
