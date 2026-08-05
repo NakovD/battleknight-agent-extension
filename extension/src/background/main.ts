@@ -15,7 +15,9 @@ chrome.runtime.onMessage.addListener((raw, _sender, sendResponse) => {
 
 	const message = parsed.data;
 
-	const handle = async (): Promise<ExtensionMessageResponse> => {
+	const handle = async (): Promise<
+		ExtensionMessageResponse<typeof duelsSettingsValidator>
+	> => {
 		switch (message.type) {
 			case "START_AGENT":
 				await controller.start(message.payload);
@@ -36,7 +38,7 @@ chrome.runtime.onMessage.addListener((raw, _sender, sendResponse) => {
 
 	handle()
 		.catch(
-			(err): ExtensionMessageResponse => ({
+			(err): ExtensionMessageResponse<typeof duelsSettingsValidator> => ({
 				ok: false,
 				error: err instanceof Error ? err.message : String(err),
 			}),
@@ -52,7 +54,11 @@ controller.onStatusChange((state) => {
 	chrome.runtime.sendMessage(
 		{
 			type: "STATUS_UPDATE",
-			payload: { status: state.status, errorMessage: state.errorMessage },
+			payload: {
+				status: state.status,
+				errorMessage: state.errorMessage,
+				settings: state.settings,
+			},
 		},
 		() => void chrome.runtime.lastError, // няма слушащ popup — игнорираме
 	);

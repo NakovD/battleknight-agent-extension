@@ -22,15 +22,14 @@ const mapFormToSettings = (values: DuelsFormType): DuelsSettings => ({
 
 export const useDuels = () => {
 	const [extensionState, setExtensionState] = useState<
-		ExtensionState & { settings: DuelsSettings | null }
+		ExtensionState<typeof duelsSettingsValidator>
 	>({ ...duelsInitialExtensionState, settings: null });
 
 	useEffect(() => {
 		extensionMessenger
-			.send({ type: "GET_STATUS" })
+			.send({ type: "GET_STATUS" }, duelsSettingsValidator)
 			.then((res) => {
-				if (res.ok)
-					setExtensionState((prev) => ({ ...res.state, settings: prev.settings }));
+				if (res.ok) setExtensionState(res.state);
 				else
 					setExtensionState({
 						status: "error",
@@ -49,21 +48,19 @@ export const useDuels = () => {
 
 	useEffect(() => {
 		return extensionMessenger.listen((msg) => {
-			if (msg.type === "STATUS_UPDATE")
-				setExtensionState((prev) => ({ ...msg.payload, settings: prev.settings }));
+			if (msg.type === "STATUS_UPDATE") setExtensionState(msg.payload);
 		}, duelsSettingsValidator);
 	}, []);
 
 	const handleSubmit = async (values: DuelsFormType) => {
 		try {
 			const settings = mapFormToSettings(values);
-			const response = await extensionMessenger.send({
-				type: "START_AGENT",
-				payload: settings,
-			});
+			const response = await extensionMessenger.send(
+				{ type: "START_AGENT", payload: settings },
+				duelsSettingsValidator,
+			);
 
-			if (response.ok)
-				setExtensionState({ ...response.state, settings });
+			if (response.ok) setExtensionState(response.state);
 			else
 				setExtensionState({
 					status: "error",
@@ -81,13 +78,11 @@ export const useDuels = () => {
 
 	const handleStop = async () => {
 		try {
-			const res = await extensionMessenger.send({ type: "STOP_AGENT" });
-			if (res.ok)
-				setExtensionState({
-					status: "idle",
-					errorMessage: null,
-					settings: null,
-				});
+			const res = await extensionMessenger.send(
+				{ type: "STOP_AGENT" },
+				duelsSettingsValidator,
+			);
+			if (res.ok) setExtensionState(res.state);
 			else
 				setExtensionState({
 					status: "error",
@@ -105,12 +100,11 @@ export const useDuels = () => {
 
 	const handleRetry = async () => {
 		if (!extensionState.settings) return;
-		const res = await extensionMessenger.send({
-			type: "START_AGENT",
-			payload: extensionState.settings,
-		});
-		if (res.ok)
-			setExtensionState({ ...res.state, settings: extensionState.settings });
+		const res = await extensionMessenger.send(
+			{ type: "START_AGENT", payload: extensionState.settings },
+			duelsSettingsValidator,
+		);
+		if (res.ok) setExtensionState(res.state);
 	};
 
 	const handleBack = () => {

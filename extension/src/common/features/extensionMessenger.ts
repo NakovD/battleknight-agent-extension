@@ -5,29 +5,29 @@ import type {
 } from "@/common/models/extension";
 import type { IExtensionMessenger } from "@/common/models/extensionMessenger";
 import {
-	ExtensionMessageResponseSchema,
+	getExtensionMessageResponseSchema,
 	getExtensionMessageSchema,
 } from "@/common/validators/extension";
 
 export const extensionMessenger: IExtensionMessenger = {
-	send: <T extends ZodType>(msg: ExtensionMessage<T>) =>
-		new Promise((resolve, reject) => {
-			chrome.runtime.sendMessage<ExtensionMessage<T>, ExtensionMessageResponse>(
-				msg,
-				(raw) => {
-					if (chrome.runtime.lastError) {
-						reject(chrome.runtime.lastError.message);
-						return;
-					}
-					const result = ExtensionMessageResponseSchema.safeParse(raw);
+	send: <T extends ZodType>(msg: ExtensionMessage<T>, schema: T) =>
+		new Promise<ExtensionMessageResponse<T>>((resolve, reject) => {
+			chrome.runtime.sendMessage<
+				ExtensionMessage<T>,
+				ExtensionMessageResponse<T>
+			>(msg, (raw) => {
+				if (chrome.runtime.lastError) {
+					reject(chrome.runtime.lastError.message);
+					return;
+				}
+				const result = getExtensionMessageResponseSchema(schema).safeParse(raw);
 
-					if (!result.success) {
-						reject(`Invalid response: ${result.error.message}`);
-						return;
-					}
-					resolve(result.data);
-				},
-			);
+				if (!result.success) {
+					reject(`Invalid response: ${result.error.message}`);
+					return;
+				}
+				resolve(result.data);
+			});
 		}),
 	listen: (handler, schema) => {
 		const listener = (raw: unknown) => {

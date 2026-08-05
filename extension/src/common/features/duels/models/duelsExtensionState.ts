@@ -1,8 +1,7 @@
-import type { DuelsSettings } from "@/common/features/duels/models/duelsSettings";
+import type { duelsSettingsValidator } from "@/common/features/duels/validators/duelsSettingsValidator";
 import type { ExtensionState } from "@/common/models/extension";
 
-export type DuelsExtensionState = ExtensionState & {
-	settings: DuelsSettings | null;
+export type DuelsExtensionState = ExtensionState<typeof duelsSettingsValidator> & {
 	attacksToday: number;
 	lastAttackAt: string | null;
 	waitUntil: number | null;
