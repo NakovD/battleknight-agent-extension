@@ -19,7 +19,7 @@ export const Duels = () => {
 		return <DuelsStatus settings={duelsSettings} onStop={handleStop} />;
 	}
 
-	if (!isError) {
+	if (isError) {
 		return (
 			<DuelsError
 				message={errorMessage}
