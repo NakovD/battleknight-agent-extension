@@ -38,6 +38,7 @@ export class ChromeStorageAgentController implements IDuelsExtensionController {
 			status: "running",
 			errorMessage: null,
 			settings,
+			consecutiveNavigations: 0,
 		};
 		await this.write(next);
 	}

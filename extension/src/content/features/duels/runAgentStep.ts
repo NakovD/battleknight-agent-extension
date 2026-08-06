@@ -6,6 +6,14 @@ const engine = createDuelsEngine("dom");
 const store = new ChromeStorageDuelsStateStore();
 
 /**
+ * Circuit breaker: ако имаме толкова последователни навигации без нито
+ * една успешна атака или "done" междувременно, приемаме че сме влезли
+ * в loop (напр. счупена навигация в играта) и спираме агента сами,
+ * вместо да разчитаме потребителят да успее да натисне Stop навреме.
+ */
+const MAX_CONSECUTIVE_NAVIGATIONS = 8;
+
+/**
  * Извиква се при зареждане на content script-а (всяка страница).
  *
  * 1. Проверява дали агентът трябва да работи и какви са настройките
@@ -42,17 +50,33 @@ export const runAgentStep = async (): Promise<void> => {
 					lastAttackAt: new Date().toISOString(),
 					waitUntil: result.waitMs ? Date.now() + result.waitMs : null,
 					currentEnemyName: null,
+					consecutiveNavigations: 0,
 				});
 				break;
 
-			case "navigated":
-				// Ако навигираме към дуел — запазваме името на противника
-				if (result.enemyName) {
-					await store.reportProgress({ currentEnemyName: result.enemyName });
+			case "navigated": {
+				const consecutiveNavigations = state.consecutiveNavigations + 1;
+
+				if (consecutiveNavigations >= MAX_CONSECUTIVE_NAVIGATIONS) {
+					await store.reportProgress({
+						status: "error",
+						errorMessage: `Агентът спря автоматично след ${consecutiveNavigations} последователни навигации без успешна атака — вероятно е засечен loop.`,
+						consecutiveNavigations: 0,
+						currentEnemyName: null,
+						waitUntil: null,
+					});
+					break;
 				}
+
+				// Ако навигираме към дуел — запазваме името на противника
+				await store.reportProgress({
+					consecutiveNavigations,
+					...(result.enemyName ? { currentEnemyName: result.enemyName } : {}),
+				});
 				// Content script-ът ще умре при навигация —
 				// новата страница ще извика runAgentStep отново
 				break;
+			}
 
 			case "waiting":
 				// Не навигираме — retry след изчакване
@@ -66,6 +90,7 @@ export const runAgentStep = async (): Promise<void> => {
 					status: "idle",
 					waitUntil: null,
 					currentEnemyName: null,
+					consecutiveNavigations: 0,
 				});
 				break;
 

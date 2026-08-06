@@ -6,4 +6,6 @@ export type DuelsExtensionState = ExtensionState<typeof duelsSettingsValidator> 
 	lastAttackAt: string | null;
 	waitUntil: number | null;
 	currentEnemyName: string | null;
+	/** Брой последователни навигации без успешна атака — виж circuit breaker-а в runAgentStep. */
+	consecutiveNavigations: number;
 };

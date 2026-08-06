@@ -15,4 +15,5 @@ export const DUELS_INITIAL_EXTENSION_STATE: DuelsExtensionState = {
 	lastAttackAt: null,
 	waitUntil: null,
 	currentEnemyName: null,
+	consecutiveNavigations: 0,
 };
