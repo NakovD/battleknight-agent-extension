@@ -1,5 +1,6 @@
 import { Square } from "lucide-react";
 import type { DuelsSettings } from "@/common/features/duels/models/duelsSettings";
+import { duelsFormPagesOptions } from "@/popup/features/duels/constants/duelsFormPagesOptions";
 import { formatNumberAdvanced } from "@/popup/utilities/formatUtility";
 
 interface IDuelsStatusProps {
@@ -47,6 +48,19 @@ export const DuelsStatus = ({ settings, onStop }: IDuelsStatusProps) => (
 							? settings.ordersToSkip.join(", ")
 							: "All orders are skipped"
 				}
+			/>
+
+			<SettingRow
+				label="Ranking page"
+				value={
+					duelsFormPagesOptions[settings.rankingOffset / 100]?.label ??
+					`Offset ${settings.rankingOffset}`
+				}
+			/>
+
+			<SettingRow
+				label="Cooldown"
+				value={`${settings.cooldownMs / 60_000} min`}
 			/>
 		</div>
 
