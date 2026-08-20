@@ -80,8 +80,6 @@ export const useMultiSlider = ({
 			newHandlePosition,
 			lowValue,
 			topValue,
-			min,
-			max,
 			valueServed,
 		);
 
@@ -158,12 +156,10 @@ const getShouldUpdate = (
 	steppedValue: number,
 	lowValue: number,
 	topValue: number,
-	min: number,
-	max: number,
 	valueServed: CalculateValueParams["valueServed"],
 ) => {
 	if (valueServed === "lower") {
-		return steppedValue < calculateHandlePositionPercentage(topValue, min, max);
+		return steppedValue < topValue;
 	}
-	return steppedValue > calculateHandlePositionPercentage(lowValue, min, max);
+	return steppedValue > lowValue;
 };
