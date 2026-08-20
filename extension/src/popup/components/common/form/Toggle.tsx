@@ -21,13 +21,19 @@ export const Toggle = ({
 				"relative shrink-0 w-9 h-5 rounded-none",
 				"border transition-all duration-200 outline-none",
 				"focus-visible:ring-1 focus-visible:ring-amber-600/50 focus-visible:ring-offset-1 focus-visible:ring-offset-stone-950",
-				"disabled:opacity-40 disabled:cursor-not-allowed",
+				disabled && "opacity-40 cursor-not-allowed",
 				value
 					? "bg-amber-900/60 border-amber-700/70"
 					: "bg-stone-900 border-stone-700/50",
 			)}
 		>
-			<input type="checkbox" className="sr-only" {...rest} />
+			<input
+				type="checkbox"
+				className="sr-only"
+				checked={value}
+				disabled={disabled}
+				{...rest}
+			/>
 			<span className="pointer-events-none absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-amber-600/30" />
 			<span className="pointer-events-none absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-amber-600/30" />
 			<span className="pointer-events-none absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-amber-600/30" />
