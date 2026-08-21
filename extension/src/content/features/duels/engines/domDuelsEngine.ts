@@ -33,7 +33,6 @@ export class DomDuelsEngine implements IDuelsEngine {
 			case "duel-result":
 				return this.handleDuelResult(settings, context);
 
-			case "unknown":
 			default:
 				navigateTo(domDuelsEngineConstants.rankingUrl);
 				return { action: "navigated" };
