@@ -29,8 +29,8 @@ export const useSliderSettings = ({
 	return {
 		lootSliderSettings: sliderSettings,
 		handleLootValueSettingsPrev: () =>
-			handleSettingsUpdate(allSettings.at(sliderSettings.id - 1)),
+			handleSettingsUpdate(allSettings[sliderSettings.id - 1]),
 		handleLootValueSettingsNext: () =>
-			handleSettingsUpdate(allSettings.at(sliderSettings.id + 1)),
+			handleSettingsUpdate(allSettings[sliderSettings.id + 1]),
 	};
 };
