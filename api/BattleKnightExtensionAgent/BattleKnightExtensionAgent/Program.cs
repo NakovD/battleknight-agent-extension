@@ -5,6 +5,7 @@ using BattleKnightExtensionAgent.Features.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,25 +33,29 @@ builder.Services
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddSingleton<ITokenService, TokenService>();
 
-var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
-    ?? throw new InvalidOperationException($"Missing '{JwtOptions.SectionName}' configuration section.");
-
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+    .AddJwtBearer();
+
+// Built from IOptions<JwtOptions> rather than by reading configuration before
+// Build(), so the validated options are the single source of truth — and
+// configuration supplied later (e.g. by the integration test host) is honoured.
+builder.Services
+    .AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+    .Configure<IOptions<JwtOptions>>((bearer, jwt) =>
     {
         // Keep "sub" as "sub" instead of remapping it to the long WS-Federation claim URI.
-        options.MapInboundClaims = false;
+        bearer.MapInboundClaims = false;
 
-        options.TokenValidationParameters = new TokenValidationParameters
+        bearer.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidIssuer = jwtOptions.Issuer,
+            ValidIssuer = jwt.Value.Issuer,
             ValidateAudience = true,
-            ValidAudience = jwtOptions.Audience,
+            ValidAudience = jwt.Value.Audience,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Key)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Value.Key)),
             ClockSkew = TimeSpan.FromSeconds(30),
         };
     });
@@ -91,3 +96,7 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
 app.MapAuthEndpoints();
 
 app.Run();
+
+// Top-level statements generate an internal Program class; the integration tests
+// need it public to host the app through WebApplicationFactory<Program>.
+public partial class Program;
