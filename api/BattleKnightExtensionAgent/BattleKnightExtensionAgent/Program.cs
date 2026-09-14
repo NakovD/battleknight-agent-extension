@@ -2,6 +2,7 @@ using System.Text;
 using BattleKnightExtensionAgent.Data;
 using BattleKnightExtensionAgent.Data.Entities;
 using BattleKnightExtensionAgent.Features.Auth;
+using BattleKnightExtensionAgent.Features.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -94,6 +95,7 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
     .WithName("HealthCheck");
 
 app.MapAuthEndpoints();
+app.MapSettingsEndpoints();
 
 app.Run();
 

@@ -1,10 +1,10 @@
 using System.Security.Claims;
+using BattleKnightExtensionAgent.Common;
 using BattleKnightExtensionAgent.Data;
 using BattleKnightExtensionAgent.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace BattleKnightExtensionAgent.Features.Auth;
 
@@ -96,7 +96,7 @@ public static class AuthEndpoints
         AppDbContext db,
         CancellationToken cancellationToken)
     {
-        if (!Guid.TryParse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub), out var userId))
+        if (principal.GetUserId() is not { } userId)
         {
             return TypedResults.Unauthorized();
         }

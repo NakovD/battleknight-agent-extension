@@ -1,12 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text;
 using BattleKnightExtensionAgent.Features.Auth;
 using BattleKnightExtensionAgent.Tests.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
-using Microsoft.IdentityModel.Tokens;
 
 namespace BattleKnightExtensionAgent.Tests.Features.Auth;
 
@@ -114,26 +112,6 @@ public sealed class CurrentUserEndpointTests(ApiFactory factory) : IClassFixture
         return me!.Id;
     }
 
-    private string CreateToken(Guid subject, DateTime? expires = null, string? signingKey = null)
-    {
-        var options = JwtOptions;
-        var expiresAt = expires ?? DateTime.UtcNow.AddMinutes(10);
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey ?? options.Key));
-
-        return new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor
-        {
-            Issuer = options.Issuer,
-            Audience = options.Audience,
-            // NotBefore and IssuedAt must not come after Expires, or the handler rejects
-            // the descriptor itself before the API ever sees the token.
-            NotBefore = expiresAt.AddMinutes(-10),
-            IssuedAt = expiresAt.AddMinutes(-10),
-            Expires = expiresAt,
-            SigningCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256),
-            Claims = new Dictionary<string, object>
-            {
-                [JwtRegisteredClaimNames.Sub] = subject.ToString(),
-            },
-        });
-    }
+    private string CreateToken(Guid subject, DateTime? expires = null, string? signingKey = null) =>
+        TestTokens.Create(factory, subject, expires, signingKey);
 }
