@@ -1,6 +1,34 @@
 @BattleKnightExtensionAgent_HostAddress = http://localhost:5224
 
-GET {{BattleKnightExtensionAgent_HostAddress}}/weatherforecast/
+GET {{BattleKnightExtensionAgent_HostAddress}}/health
+Accept: application/json
+
+###
+
+# @name register
+POST {{BattleKnightExtensionAgent_HostAddress}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "knight@example.com",
+  "password": "super-secret-passphrase"
+}
+
+###
+
+# @name login
+POST {{BattleKnightExtensionAgent_HostAddress}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "knight@example.com",
+  "password": "super-secret-passphrase"
+}
+
+###
+
+GET {{BattleKnightExtensionAgent_HostAddress}}/auth/me
+Authorization: Bearer {{login.response.body.accessToken}}
 Accept: application/json
 
 ###
