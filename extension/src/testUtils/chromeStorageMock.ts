@@ -29,6 +29,10 @@ export function installChromeStorageMock() {
 					Object.assign(store, items);
 					callback?.();
 				}),
+				remove: vi.fn((key: string, callback?: () => void) => {
+					delete store[key];
+					callback?.();
+				}),
 			},
 			onChanged: {
 				addListener: vi.fn((listener: StorageChangeListener) => {

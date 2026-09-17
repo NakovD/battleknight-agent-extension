@@ -1,51 +1,35 @@
+import { createAuthMessageHandler } from "@/background/features/auth/authMessageHandler";
+import { AuthService } from "@/background/features/auth/authService";
+import { ChromeStorageAuthSessionStore } from "@/background/features/auth/chromeStorageAuthSessionStore";
+import { FetchAuthApiClient } from "@/background/features/auth/fetchAuthApiClient";
 import { ChromeStorageAgentController } from "@/background/features/duels/chromeStorageExtensionController";
-import { duelsSettingsValidator } from "@/common/features/duels/validators/duelsSettingsValidator";
-import type { ExtensionMessageResponse } from "@/common/models/extension";
-import { getExtensionMessageSchema } from "@/common/validators/extension";
+import { createDuelsMessageHandler } from "@/background/features/duels/duelsMessageHandler";
+import type { MessageHandler } from "@/background/models/messageHandler";
 
 const controller = new ChromeStorageAgentController();
-const messageSchema = getExtensionMessageSchema(duelsSettingsValidator);
+
+const authService = new AuthService(
+	new FetchAuthApiClient(import.meta.env.VITE_API_BASE_URL),
+	new ChromeStorageAuthSessionStore(),
+);
+
+const messageHandlers: MessageHandler[] = [
+	createDuelsMessageHandler(controller),
+	createAuthMessageHandler(authService),
+];
 
 chrome.runtime.onMessage.addListener((raw, _sender, sendResponse) => {
-	const parsed = messageSchema.safeParse(raw);
-	if (!parsed.success) {
-		console.error("[background] Отхвърлено съобщение:", raw, parsed.error);
-		return false;
+	for (const handle of messageHandlers) {
+		const reply = handle(raw);
+
+		if (reply) {
+			reply.then(sendResponse);
+			return true; // отговорът пристига асинхронно
+		}
 	}
 
-	const message = parsed.data;
-
-	const handle = async (): Promise<
-		ExtensionMessageResponse<typeof duelsSettingsValidator>
-	> => {
-		switch (message.type) {
-			case "START_AGENT":
-				await controller.start(message.payload);
-				return { ok: true, state: await controller.getStatus() };
-
-			case "STOP_AGENT":
-				await controller.stop();
-				return { ok: true, state: await controller.getStatus() };
-
-			case "GET_STATUS":
-				return { ok: true, state: await controller.getStatus() };
-
-			case "STATUS_UPDATE":
-				// Background не приема този тип съобщения — само ги излъчва към popup-а
-				return { ok: false, error: "Unexpected message type: STATUS_UPDATE" };
-		}
-	};
-
-	handle()
-		.catch(
-			(err): ExtensionMessageResponse<typeof duelsSettingsValidator> => ({
-				ok: false,
-				error: err instanceof Error ? err.message : String(err),
-			}),
-		)
-		.then(sendResponse);
-
-	return true; // отговорът пристига асинхронно
+	console.error("[background] Отхвърлено съобщение:", raw);
+	return false;
 });
 
 // Релей на всяка промяна на състоянието (включително от content script-а,
