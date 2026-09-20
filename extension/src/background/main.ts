@@ -4,17 +4,27 @@ import { ChromeStorageAuthSessionStore } from "@/background/features/auth/chrome
 import { FetchAuthApiClient } from "@/background/features/auth/fetchAuthApiClient";
 import { ChromeStorageAgentController } from "@/background/features/duels/chromeStorageExtensionController";
 import { createDuelsMessageHandler } from "@/background/features/duels/duelsMessageHandler";
+import { createDuelsSettingsMessageHandler } from "@/background/features/duels/duelsSettingsMessageHandler";
+import { FetchDuelsSettingsApiClient } from "@/background/features/duels/fetchDuelsSettingsApiClient";
+import { RemoteDuelsSettingsService } from "@/background/features/duels/remoteDuelsSettingsService";
 import type { MessageHandler } from "@/background/models/messageHandler";
 
 const controller = new ChromeStorageAgentController();
+const sessions = new ChromeStorageAuthSessionStore();
 
 const authService = new AuthService(
 	new FetchAuthApiClient(import.meta.env.VITE_API_BASE_URL),
-	new ChromeStorageAuthSessionStore(),
+	sessions,
+);
+
+const remoteSettings = new RemoteDuelsSettingsService(
+	new FetchDuelsSettingsApiClient(import.meta.env.VITE_API_BASE_URL),
+	sessions,
 );
 
 const messageHandlers: MessageHandler[] = [
 	createDuelsMessageHandler(controller),
+	createDuelsSettingsMessageHandler(remoteSettings),
 	createAuthMessageHandler(authService),
 ];
 

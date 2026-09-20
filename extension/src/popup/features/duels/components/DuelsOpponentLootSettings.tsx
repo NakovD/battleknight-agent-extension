@@ -14,6 +14,8 @@ export const DuelsOpponentLootSettings = withDuelsForm({
 		const lootSliderSettingsSetup = useDuelsLootSliderSettings({
 			handleLootValueChange: (newMaxLoot) =>
 				form.setFieldValue("maxLoot", newMaxLoot),
+			// Start on the tier that can show the restored loot value.
+			initialValue: form.state.values.maxLoot,
 		});
 
 		return (

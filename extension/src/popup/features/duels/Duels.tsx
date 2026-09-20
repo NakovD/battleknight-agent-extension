@@ -9,6 +9,9 @@ export const Duels = () => {
 		isError,
 		duelsSettings,
 		errorMessage,
+		areSettingsLoaded,
+		savedFormValues,
+		syncWarning,
 		handleSubmit,
 		handleStop,
 		handleRetry,
@@ -16,7 +19,13 @@ export const Duels = () => {
 	} = useDuels();
 
 	if (isRunning && duelsSettings) {
-		return <DuelsStatus settings={duelsSettings} onStop={handleStop} />;
+		return (
+			<DuelsStatus
+				settings={duelsSettings}
+				warning={syncWarning}
+				onStop={handleStop}
+			/>
+		);
 	}
 
 	if (isError) {
@@ -29,5 +38,20 @@ export const Duels = () => {
 		);
 	}
 
-	return <DuelsForm onSubmit={handleSubmit} />;
+	// The form reads its starting values once, so it must not render before the
+	// account's saved settings have been fetched.
+	if (!areSettingsLoaded) {
+		return <p className="p-4 text-[11px] text-stone-500">Loading settings...</p>;
+	}
+
+	return (
+		<>
+			{syncWarning && (
+				<p role="alert" className="px-4 pt-3 text-[11px] text-amber-500/80">
+					{syncWarning}
+				</p>
+			)}
+			<DuelsForm onSubmit={handleSubmit} defaultValues={savedFormValues} />
+		</>
+	);
 };

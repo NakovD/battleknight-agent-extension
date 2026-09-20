@@ -16,6 +16,8 @@ export const DuelsOpponentLevelSettings = withDuelsForm({
 					newSettings.min + newSettings.step,
 					newSettings.min + newSettings.step * 2,
 				] as [number, number]),
+			// Start on the tier that can show the restored level.
+			initialValue: form.state.values.levels[1],
 		});
 
 		return (

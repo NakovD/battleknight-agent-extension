@@ -1,3 +1,4 @@
+import { ApiError } from "@/background/models/apiError";
 import type {
 	LoginCredentials,
 	RegisterCredentials,
@@ -17,6 +18,6 @@ export interface IAuthApiClient {
 	login(credentials: LoginCredentials): Promise<IssuedToken>;
 }
 
-export class AuthApiError extends Error {
+export class AuthApiError extends ApiError {
 	override name = "AuthApiError";
 }
