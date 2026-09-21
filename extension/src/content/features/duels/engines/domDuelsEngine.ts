@@ -1,5 +1,9 @@
 import type { DuelsSettings } from "@/common/features/duels/models/duelsSettings";
-import { domDuelsEngineConstants } from "@/content/features/duels/constants/domDuelsEngineConstants";
+import {
+	domDuelsEngineConstants,
+	profileLinkSelector,
+	rankingTableColumns,
+} from "@/content/features/duels/constants/domDuelsEngineConstants";
 import type {
 	IDuelsEngine,
 	IDuelsStepContext,
@@ -82,12 +86,8 @@ export class DomDuelsEngine implements IDuelsEngine {
 			return { action: "done" };
 		}
 
-		const enemyId = extractEnemyId(target.profileUrl);
-		if (!enemyId) {
-			return { action: "done" };
-		}
-
-		navigateTo(`${domDuelsEngineConstants.duelUrl}${enemyId}`);
+		// parseKnightRow already dropped any row whose profile link had no id.
+		navigateTo(`${domDuelsEngineConstants.duelUrl}${target.id}`);
 		return { action: "navigated", knightId: target.id, enemyName: target.name };
 	}
 
@@ -151,13 +151,15 @@ interface ScrapedKnight {
 }
 
 function scrapeKnights(): ScrapedKnight[] {
-	const allRows = document.querySelectorAll<HTMLElement>(
+	const rows = document.querySelectorAll<HTMLElement>(
 		"#highscoreTable tbody tr",
 	);
-	const knightRows = Array.from(allRows).slice(2);
 
+	// Header and spacer rows are recognised by having no player link rather than by
+	// position: the ranking doesn't always put the same number of them first, and
+	// skipping a fixed two dropped real knights on pages that had fewer.
 	const knights: ScrapedKnight[] = [];
-	knightRows.forEach((row) => {
+	rows.forEach((row) => {
 		const knight = parseKnightRow(row);
 		if (knight) knights.push(knight);
 	});
@@ -165,12 +167,21 @@ function scrapeKnights(): ScrapedKnight[] {
 	return knights;
 }
 
+const parseNumericCell = (row: HTMLElement, selector: string) => {
+	const text = row.querySelector<HTMLElement>(selector)?.textContent?.trim() ?? "0";
+
+	// Thousand separators and any stray markup around the number.
+	return parseInt(text.replace(/\D/g, ""), 10) || 0;
+};
+
 function parseKnightRow(row: HTMLElement): ScrapedKnight | null {
-	const playerTd = row.querySelector<HTMLElement>("td.playerName");
+	const playerTd = row.querySelector<HTMLElement>(
+		rankingTableColumns.playerName,
+	);
 	if (!playerTd) return null;
 
 	const profileAnchor =
-		playerTd.querySelector<HTMLAnchorElement>("a#playerLink");
+		playerTd.querySelector<HTMLAnchorElement>(profileLinkSelector);
 	if (!profileAnchor) return null;
 
 	const profileUrl = profileAnchor.href;
@@ -179,18 +190,15 @@ function parseKnightRow(row: HTMLElement): ScrapedKnight | null {
 	const enemyId = extractEnemyId(profileUrl);
 	if (!enemyId) return null;
 
-	// Орден — втори <a> в playerTd без id="playerLink"
+	// Орден — всеки друг <a> в клетката с името
 	const allAnchors = playerTd.querySelectorAll<HTMLAnchorElement>("a");
-	const orderAnchor = Array.from(allAnchors).find((a) => a.id !== "playerLink");
+	const orderAnchor = Array.from(allAnchors).find(
+		(anchor) => anchor !== profileAnchor,
+	);
 	const order = orderAnchor?.textContent?.trim() || null;
 
-	const levelText =
-		row.querySelector<HTMLElement>("td.highscore05")?.textContent?.trim() ?? "0";
-	const level = parseInt(levelText.replace(/\D/g, ""), 10) || 0;
-
-	const lootText =
-		row.querySelector<HTMLElement>("td.highscore06")?.textContent?.trim() ?? "0";
-	const loot = parseInt(lootText.replace(/\D/g, ""), 10) || 0;
+	const level = parseNumericCell(row, rankingTableColumns.level);
+	const loot = parseNumericCell(row, rankingTableColumns.loot);
 
 	return { id: enemyId, name, level, loot, order, profileUrl };
 }

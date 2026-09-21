@@ -54,14 +54,23 @@ function buildRankingDOM(
         <tr><td>header 2</td></tr>
         ${knights
 					.map(
-						(k) => `
+						// Mirrors a live ranking row: rank, icon, name, level, loot, then
+						// fights/wins/losses. Levels used to be read from the column after
+						// the right one, which no test caught because this helper had the
+						// same layout as the code.
+						(k, index) => `
           <tr>
-            <td class="playerName">
+            <td class="highscore01">${1401 + index}</td>
+            <td class="highscore02"></td>
+            <td class="highscore03 playerName">
               <a id="playerLink" href="${k.profileUrl}">${k.name}</a>
               ${k.order ? `<a href="/order/1">${k.order}</a>` : ""}
             </td>
-            <td class="highscore05">${k.level}</td>
-            <td class="highscore06">${k.loot}</td>
+            <td class="highscore04">${k.level}</td>
+            <td class="highscore05">${k.loot}</td>
+            <td class="highscore06">236</td>
+            <td class="highscore07">235</td>
+            <td class="highscore08">1</td>
           </tr>
         `,
 					)
@@ -225,6 +234,48 @@ describe("DomDuelsEngine", () => {
 			});
 
 			expect(result.action).toBe("navigated");
+		});
+	});
+
+	describe("handleRankingReady — четене на таблицата", () => {
+		it("не изпуска рицар, застанал на първия ред", async () => {
+			setPathname("/highscore/");
+			buildRankingDOM("0", [
+				{
+					name: "First Row Knight",
+					level: 10,
+					loot: 500,
+					profileUrl:
+						"https://s26-bg.battleknight.gameforge.com:443/common/profile/777/Scores/Player",
+				},
+			]);
+			// Класацията не винаги слага заглавни редове преди рицарите.
+			document.querySelectorAll("#highscoreTable tbody tr").forEach((row) => {
+				if (!row.querySelector('a[href*="/profile/"]')) row.remove();
+			});
+
+			const result = await engine.runStep(defaultSettings, defaultContext);
+
+			expect(result.action).toBe("navigated");
+			expect(result.knightId).toBe("777");
+		});
+
+		it("чете нивото и плячката от правилните колони", async () => {
+			setPathname("/highscore/");
+			buildRankingDOM("0", [
+				{
+					name: "Low Level Knight",
+					level: 7, // в обхвата 5-15
+					loot: 1500, // под lootMax 2000
+					profileUrl:
+						"https://s26-bg.battleknight.gameforge.com:443/common/profile/888/Scores/Player",
+				},
+			]);
+
+			const result = await engine.runStep(defaultSettings, defaultContext);
+
+			expect(result.action).toBe("navigated");
+			expect(result.knightId).toBe("888");
 		});
 	});
 
