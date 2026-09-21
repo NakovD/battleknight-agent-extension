@@ -7,4 +7,9 @@ export interface IDuelsEngineStepResult {
 	waitMs?: number;
 	won?: boolean;
 	enemyName?: string;
+	/**
+	 * Защо агентът спира ("done"). Без него спирането изглежда точно като
+	 * никога да не е стартирал.
+	 */
+	reason?: string;
 }

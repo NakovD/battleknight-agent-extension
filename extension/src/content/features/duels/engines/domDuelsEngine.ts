@@ -79,11 +79,40 @@ export class DomDuelsEngine implements IDuelsEngine {
 			};
 		}
 
+		if (!document.querySelector("#highscoreTable tbody")) {
+			return {
+				action: "done",
+				reason:
+					"Could not find the ranking table on this page. The game's layout may have changed.",
+			};
+		}
+
 		const knights = scrapeKnights();
+
+		if (knights.length === 0) {
+			return {
+				action: "done",
+				reason:
+					"Could not read any knights from the ranking table. The game's layout may have changed.",
+			};
+		}
+
 		const target = findFirstValidTarget(knights, settings);
 
 		if (!target) {
-			return { action: "done" };
+			// Shows what was actually scraped, so a column read from the wrong place
+			// can be told apart from filters that are genuinely too narrow.
+			console.log(
+				"[DomDuelsEngine] no match; first scraped knights:",
+				knights.slice(0, 5),
+				"settings:",
+				settings,
+			);
+
+			return {
+				action: "done",
+				reason: `None of the ${knights.length} knights on this ranking page matched your filters. Try another ranking page, or widen the level and loot range.`,
+			};
 		}
 
 		// parseKnightRow already dropped any row whose profile link had no id.

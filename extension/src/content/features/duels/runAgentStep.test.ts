@@ -114,6 +114,35 @@ describe("runAgentStep — circuit breaker", () => {
 		);
 	});
 
+	it("записва причината за спиране, за да се види в popup-а", async () => {
+		mockStore.getState.mockResolvedValue(buildState());
+		mockEngine.runStep.mockResolvedValue({
+			action: "done",
+			reason: "None of the 100 knights on this ranking page matched your filters.",
+		});
+
+		await runAgentStep();
+
+		expect(mockStore.reportProgress).toHaveBeenCalledWith(
+			expect.objectContaining({
+				status: "idle",
+				errorMessage:
+					"None of the 100 knights on this ranking page matched your filters.",
+			}),
+		);
+	});
+
+	it("изчиства старото съобщение, когато спирането е без причина", async () => {
+		mockStore.getState.mockResolvedValue(buildState());
+		mockEngine.runStep.mockResolvedValue({ action: "done" });
+
+		await runAgentStep();
+
+		expect(mockStore.reportProgress).toHaveBeenCalledWith(
+			expect.objectContaining({ status: "idle", errorMessage: null }),
+		);
+	});
+
 	it("не прави нищо ако агентът не работи", async () => {
 		mockStore.isRunning.mockResolvedValue(false);
 

@@ -88,6 +88,8 @@ export const runAgentStep = async (): Promise<void> => {
 			case "done":
 				await store.reportProgress({
 					status: "idle",
+					// Носи се до popup-а, за да се вижда защо агентът е спрял.
+					errorMessage: result.reason ?? null,
 					waitUntil: null,
 					currentEnemyName: null,
 					consecutiveNavigations: 0,

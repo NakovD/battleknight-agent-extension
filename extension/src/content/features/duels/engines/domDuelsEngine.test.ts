@@ -279,6 +279,47 @@ describe("DomDuelsEngine", () => {
 		});
 	});
 
+	describe("handleRankingReady — причина за спиране", () => {
+		it("обяснява, че никой от рицарите не отговаря на филтрите", async () => {
+			setPathname("/highscore/");
+			buildRankingDOM("0", [
+				{
+					name: "Too High",
+					level: 99, // над levelMax: 15
+					loot: 100,
+					profileUrl:
+						"https://s26-bg.battleknight.gameforge.com:443/common/profile/1/Scores/Player",
+				},
+			]);
+
+			const result = await engine.runStep(defaultSettings, defaultContext);
+
+			expect(result.action).toBe("done");
+			expect(result.reason).toContain("matched your filters");
+		});
+
+		it("различава празна таблица от липса на подходящи рицари", async () => {
+			setPathname("/highscore/");
+			buildRankingDOM("0", []);
+
+			const result = await engine.runStep(defaultSettings, defaultContext);
+
+			expect(result.action).toBe("done");
+			expect(result.reason).toContain("Could not read any knights");
+		});
+
+		it("разпознава липсваща таблица", async () => {
+			setPathname("/highscore/");
+			buildRankingDOM("0", []);
+			document.querySelector("#highscoreTable")?.remove();
+
+			const result = await engine.runStep(defaultSettings, defaultContext);
+
+			expect(result.action).toBe("done");
+			expect(result.reason).toContain("Could not find the ranking table");
+		});
+	});
+
 	describe("handleRankingReady — филтриране по ниво", () => {
 		it("пропуска рицари под минималното ниво", async () => {
 			setPathname("/highscore/");

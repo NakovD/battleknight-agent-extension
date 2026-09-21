@@ -46,6 +46,12 @@ export const Duels = () => {
 
 	return (
 		<>
+			{/* Why the agent stopped on its own — otherwise it looks like it never ran. */}
+			{errorMessage && (
+				<p role="status" className="px-4 pt-3 text-[11px] text-amber-400/90">
+					{errorMessage}
+				</p>
+			)}
 			{syncWarning && (
 				<p role="alert" className="px-4 pt-3 text-[11px] text-amber-500/80">
 					{syncWarning}

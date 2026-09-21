@@ -96,6 +96,27 @@ describe("Duels", () => {
 		);
 	});
 
+	it("показва защо агентът е спрял сам", async () => {
+		settingsSend.mockResolvedValue({ ok: true, settings: savedSettings });
+		agentSend.mockResolvedValue({
+			ok: true,
+			state: {
+				status: "idle",
+				errorMessage:
+					"None of the 100 knights on this ranking page matched your filters.",
+				settings: savedSettings,
+			},
+		});
+
+		render(<Duels />);
+
+		expect(await screen.findByRole("status")).toHaveTextContent(
+			"None of the 100 knights on this ranking page matched your filters.",
+		);
+		// Обяснението стои над формата, не вместо нея.
+		expect(screen.getByRole("button", { name: "Start extension" })).toBeInTheDocument();
+	});
+
 	it("показва предупреждение, ако зареждането от акаунта се провали, но формата работи", async () => {
 		settingsSend.mockResolvedValue({
 			ok: false,
