@@ -37,6 +37,9 @@ export class DomDuelsEngine implements IDuelsEngine {
 			case "duel-result":
 				return this.handleDuelResult(settings, context);
 
+			case "duel-refused":
+				return this.handleDuelRefused(context);
+
 			default:
 				navigateTo(domDuelsEngineConstants.rankingUrl);
 				return { action: "navigated" };
@@ -97,7 +100,11 @@ export class DomDuelsEngine implements IDuelsEngine {
 			};
 		}
 
-		const target = findFirstValidTarget(knights, settings);
+		const target = findFirstValidTarget(
+			knights,
+			settings,
+			context.refusedEnemyIds,
+		);
 
 		if (!target) {
 			// Shows what was actually scraped, so a column read from the wrong place
@@ -136,6 +143,29 @@ export class DomDuelsEngine implements IDuelsEngine {
 			waitMs: settings.cooldownMs,
 		};
 	}
+
+	// ── duel-refused: играта не допусна дуела ────────────────────────────────
+
+	/**
+	 * The game bounced the duel to its error page. Without this the agent went
+	 * straight back to the ranking, picked the same knight again and looped until
+	 * the circuit breaker stopped it — and no cooldown was ever recorded, because
+	 * that only happens after a duel result.
+	 */
+	private handleDuelRefused(
+		context: IDuelsStepContext,
+	): IDuelsEngineStepResult {
+		navigateTo(domDuelsEngineConstants.rankingUrl);
+
+		// No extra wait: a refusal costs nothing, so the next knight can be tried
+		// right away. Any cooldown still running from the last actual duel stays.
+		return {
+			action: "refused",
+			reason: context.currentEnemyName
+				? `The game refused the duel with ${context.currentEnemyName}. Moving on to the next knight.`
+				: "The game refused the duel. Moving on to the next knight.",
+		};
+	}
 }
 
 // ─── Разпознаване на страницата ───────────────────────────────────────────────
@@ -144,10 +174,13 @@ type PageKind =
 	| "ranking-unfiltered"
 	| "ranking-ready"
 	| "duel-result"
+	| "duel-refused"
 	| "unknown";
 
 function detectPage(settings: DuelsSettings): PageKind {
 	const path = window.location.pathname;
+
+	if (path.includes(domDuelsEngineConstants.errorPath)) return "duel-refused";
 
 	if (path.includes("/duel/duel")) return "duel-result";
 
@@ -237,9 +270,13 @@ function parseKnightRow(row: HTMLElement): ScrapedKnight | null {
 function findFirstValidTarget(
 	knights: ScrapedKnight[],
 	settings: DuelsSettings,
+	refusedEnemyIds: string[] = [],
 ): ScrapedKnight | null {
 	return (
 		knights.find((k) => {
+			// The game already turned this duel down; trying again would just loop.
+			if (refusedEnemyIds.includes(k.id)) return false;
+
 			if (k.level < settings.levelMin || k.level > settings.levelMax)
 				return false;
 			if (settings.lootFilterEnabled && k.loot > settings.lootMax) return false;

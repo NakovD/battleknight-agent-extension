@@ -14,6 +14,12 @@ const store = new ChromeStorageDuelsStateStore();
 const MAX_CONSECUTIVE_NAVIGATIONS = 8;
 
 /**
+ * Колко отказани рицаря помним. Държи списъка кратък — стари откази губят
+ * смисъл (играта може вече да допуска дуел с тях).
+ */
+const MAX_REFUSED_ENEMIES = 20;
+
+/**
  * Извиква се при зареждане на content script-а (всяка страница).
  *
  * 1. Проверява дали агентът трябва да работи и какви са настройките
@@ -38,6 +44,7 @@ export const runAgentStep = async (): Promise<void> => {
 	const context: IDuelsStepContext = {
 		waitUntil: state.waitUntil,
 		currentEnemyName: state.currentEnemyName,
+		refusedEnemyIds: state.refusedEnemyIds ?? [],
 	};
 
 	try {
@@ -50,9 +57,37 @@ export const runAgentStep = async (): Promise<void> => {
 					lastAttackAt: new Date().toISOString(),
 					waitUntil: result.waitMs ? Date.now() + result.waitMs : null,
 					currentEnemyName: null,
+					currentEnemyId: null,
 					consecutiveNavigations: 0,
 				});
 				break;
+
+			case "refused": {
+				// Играта отказа дуела. Чакаме cooldown-а и повече не пробваме този
+				// рицар, иначе следващата стъпка избира същия и се върти в кръг.
+				const refusedEnemyIds = state.currentEnemyId
+					? [
+							...(state.refusedEnemyIds ?? []).filter(
+								(id) => id !== state.currentEnemyId,
+							),
+							state.currentEnemyId,
+						].slice(-MAX_REFUSED_ENEMIES)
+					: (state.refusedEnemyIds ?? []);
+
+				// waitUntil нарочно се оставя както е: отказът не струва нищо, така че
+				// следващият рицар може да се пробва веднага, но cooldown-ът от
+				// последния истински дуел трябва да си изтече.
+				//
+				// consecutiveNavigations също не се нулира: отказът не е успех, и низ
+				// от откази трябва да стигне до circuit breaker-а.
+				await store.reportProgress({
+					refusedEnemyIds,
+					errorMessage: result.reason ?? null,
+					currentEnemyName: null,
+					currentEnemyId: null,
+				});
+				break;
+			}
 
 			case "navigated": {
 				const consecutiveNavigations = state.consecutiveNavigations + 1;
@@ -63,15 +98,18 @@ export const runAgentStep = async (): Promise<void> => {
 						errorMessage: `Агентът спря автоматично след ${consecutiveNavigations} последователни навигации без успешна атака — вероятно е засечен loop.`,
 						consecutiveNavigations: 0,
 						currentEnemyName: null,
+						currentEnemyId: null,
 						waitUntil: null,
 					});
 					break;
 				}
 
-				// Ако навигираме към дуел — запазваме името на противника
+				// Ако навигираме към дуел — запазваме кого атакуваме, за да знаем
+				// кой е отказан, ако играта ни прати на error страницата.
 				await store.reportProgress({
 					consecutiveNavigations,
 					...(result.enemyName ? { currentEnemyName: result.enemyName } : {}),
+					...(result.knightId ? { currentEnemyId: result.knightId } : {}),
 				});
 				// Content script-ът ще умре при навигация —
 				// новата страница ще извика runAgentStep отново
@@ -92,6 +130,7 @@ export const runAgentStep = async (): Promise<void> => {
 					errorMessage: result.reason ?? null,
 					waitUntil: null,
 					currentEnemyName: null,
+					currentEnemyId: null,
 					consecutiveNavigations: 0,
 				});
 				break;

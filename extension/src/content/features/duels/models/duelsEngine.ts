@@ -18,4 +18,6 @@ export interface IDuelsEngine {
 export interface IDuelsStepContext {
 	currentEnemyName: string | null;
 	waitUntil: number | null;
+	/** Рицари, при които играта вече е отказала дуел — пропускат се при избора. */
+	refusedEnemyIds?: string[];
 }

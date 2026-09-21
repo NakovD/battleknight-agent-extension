@@ -42,6 +42,8 @@ describe("ChromeStorageAgentController", () => {
 			lastAttackAt: null,
 			waitUntil: null,
 			currentEnemyName: null,
+			currentEnemyId: null,
+			refusedEnemyIds: [],
 			consecutiveNavigations: 6,
 		} satisfies DuelsExtensionState;
 
@@ -108,6 +110,8 @@ describe("ChromeStorageAgentController", () => {
 			lastAttackAt: null,
 			waitUntil: null,
 			currentEnemyName: "Enemy Knight",
+			currentEnemyId: "42",
+			refusedEnemyIds: [],
 			consecutiveNavigations: 1,
 		};
 

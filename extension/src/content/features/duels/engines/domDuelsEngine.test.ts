@@ -237,6 +237,52 @@ describe("DomDuelsEngine", () => {
 		});
 	});
 
+	describe("duel-refused — играта отказа дуела", () => {
+		it("разпознава error страницата и се връща към класацията", async () => {
+			setPathname("/common/error");
+
+			const navigateSpy = vi.spyOn(window.location, "href", "set");
+			const result = await engine.runStep(defaultSettings, {
+				...defaultContext,
+				currentEnemyName: "Some Knight",
+			});
+
+			expect(result.action).toBe("refused");
+			// Без ново изчакване — отказът не струва ход, минава се на следващия.
+			expect(result.waitMs).toBeUndefined();
+			expect(result.reason).toContain("Some Knight");
+			expect(navigateSpy).toHaveBeenCalledWith("/highscore/");
+		});
+
+		it("не избира рицар, при когото играта вече е отказала дуел", async () => {
+			setPathname("/highscore/");
+			buildRankingDOM("0", [
+				{
+					name: "Refused Knight",
+					level: 10,
+					loot: 100,
+					profileUrl:
+						"https://s26-bg.battleknight.gameforge.com:443/common/profile/111/Scores/Player",
+				},
+				{
+					name: "Next Knight",
+					level: 10,
+					loot: 100,
+					profileUrl:
+						"https://s26-bg.battleknight.gameforge.com:443/common/profile/222/Scores/Player",
+				},
+			]);
+
+			const result = await engine.runStep(defaultSettings, {
+				...defaultContext,
+				refusedEnemyIds: ["111"],
+			});
+
+			expect(result.action).toBe("navigated");
+			expect(result.knightId).toBe("222");
+		});
+	});
+
 	describe("handleRankingReady — четене на таблицата", () => {
 		it("не изпуска рицар, застанал на първия ред", async () => {
 			setPathname("/highscore/");
@@ -251,7 +297,7 @@ describe("DomDuelsEngine", () => {
 			]);
 			// Класацията не винаги слага заглавни редове преди рицарите.
 			document.querySelectorAll("#highscoreTable tbody tr").forEach((row) => {
-				if (!row.querySelector('a[href*="/profile/"]')) row.remove();
+				if (!row.querySelector("a#playerLink")) row.remove();
 			});
 
 			const result = await engine.runStep(defaultSettings, defaultContext);
@@ -260,22 +306,24 @@ describe("DomDuelsEngine", () => {
 			expect(result.knightId).toBe("777");
 		});
 
-		it("чете нивото и плячката от правилните колони", async () => {
+		it("пропуска заглавни и празни редове, без да ги брои за рицари", async () => {
 			setPathname("/highscore/");
 			buildRankingDOM("0", [
 				{
-					name: "Low Level Knight",
-					level: 7, // в обхвата 5-15
-					loot: 1500, // под lootMax 2000
+					name: "Only Knight",
+					level: 99, // над levelMax, за да видим броя в съобщението
+					loot: 500,
 					profileUrl:
-						"https://s26-bg.battleknight.gameforge.com:443/common/profile/888/Scores/Player",
+						"https://s26-bg.battleknight.gameforge.com:443/common/profile/778/Scores/Player",
 				},
 			]);
+			document
+				.querySelector("#highscoreTable tbody")
+				?.insertAdjacentHTML("beforeend", "<tr><td></td></tr>");
 
 			const result = await engine.runStep(defaultSettings, defaultContext);
 
-			expect(result.action).toBe("navigated");
-			expect(result.knightId).toBe("888");
+			expect(result.reason).toContain("None of the 1 knights");
 		});
 	});
 

@@ -1,6 +1,8 @@
 export const domDuelsEngineConstants = {
 	rankingUrl: "/highscore/",
 	duelUrl: "/duel/duel/?enemyID=",
+	/** Where the game lands when it refuses a duel. */
+	errorPath: "/common/error",
 };
 
 /**
