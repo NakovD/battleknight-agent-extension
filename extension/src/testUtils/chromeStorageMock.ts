@@ -51,10 +51,14 @@ export function installChromeStorageMock() {
 		key: string,
 		newValue: unknown,
 		areaName = "local",
+		oldValue?: unknown,
 	) => {
-		changeListeners.forEach((listener) =>
-			listener({ [key]: { newValue } as chrome.storage.StorageChange }, areaName),
-		);
+		changeListeners.forEach((listener) => {
+			listener(
+				{ [key]: { newValue, oldValue } as chrome.storage.StorageChange },
+				areaName,
+			);
+		});
 	};
 
 	return { store, dispatchChange };

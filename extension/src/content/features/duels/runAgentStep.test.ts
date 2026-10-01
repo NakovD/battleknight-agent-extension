@@ -245,6 +245,35 @@ describe("runAgentStep — circuit breaker", () => {
 		);
 	});
 
+	it("не изпълнява две застъпващи се стъпки", async () => {
+		// Стартиране от popup-а и връщане към таба могат да съвпаднат; две
+		// едновременни стъпки биха прочели едно и също състояние и атакували двойно.
+		mockStore.getState.mockResolvedValue(buildState());
+		let finishStep: (result: unknown) => void = () => {};
+		mockEngine.runStep.mockReturnValue(
+			new Promise((resolve) => {
+				finishStep = resolve;
+			}),
+		);
+
+		const first = runAgentStep();
+		const second = runAgentStep();
+		finishStep({ action: "done" });
+		await Promise.all([first, second]);
+
+		expect(mockEngine.runStep).toHaveBeenCalledOnce();
+	});
+
+	it("пуска нова стъпка след като предишната е приключила", async () => {
+		mockStore.getState.mockResolvedValue(buildState());
+		mockEngine.runStep.mockResolvedValue({ action: "done" });
+
+		await runAgentStep();
+		await runAgentStep();
+
+		expect(mockEngine.runStep).toHaveBeenCalledTimes(2);
+	});
+
 	it("не прави нищо ако агентът не работи", async () => {
 		mockStore.isRunning.mockResolvedValue(false);
 

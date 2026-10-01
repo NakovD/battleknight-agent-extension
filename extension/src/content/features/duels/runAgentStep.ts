@@ -20,7 +20,14 @@ const MAX_CONSECUTIVE_NAVIGATIONS = 8;
 const MAX_REFUSED_ENEMIES = 20;
 
 /**
- * Извиква се при зареждане на content script-а (всяка страница).
+ * Пази от застъпващи се стъпки: вече има няколко повода за изпълнение
+ * (зареждане на страницата, стартиране от popup-а, връщане към таба), а две
+ * едновременни стъпки биха чели едно и също състояние и атакували двойно.
+ */
+let isStepInFlight = false;
+
+/**
+ * Изпълнява една стъпка, ако агентът работи и в момента не тече друга.
  *
  * 1. Проверява дали агентът трябва да работи и какви са настройките
  * 2. Изгражда контекст от текущото state
@@ -28,6 +35,18 @@ const MAX_REFUSED_ENEMIES = 20;
  * 4. Записва резултата обратно в storage
  */
 export const runAgentStep = async (): Promise<void> => {
+	if (isStepInFlight) return;
+
+	isStepInFlight = true;
+
+	try {
+		await executeAgentStep();
+	} finally {
+		isStepInFlight = false;
+	}
+};
+
+const executeAgentStep = async (): Promise<void> => {
 	const running = await store.isRunning();
 	if (!running) return;
 
