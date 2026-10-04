@@ -29,6 +29,10 @@ export function installChromeStorageMock() {
 					Object.assign(store, items);
 					callback?.();
 				}),
+				remove: vi.fn((key: string, callback?: () => void) => {
+					delete store[key];
+					callback?.();
+				}),
 			},
 			onChanged: {
 				addListener: vi.fn((listener: StorageChangeListener) => {
@@ -47,10 +51,14 @@ export function installChromeStorageMock() {
 		key: string,
 		newValue: unknown,
 		areaName = "local",
+		oldValue?: unknown,
 	) => {
-		changeListeners.forEach((listener) =>
-			listener({ [key]: { newValue } as chrome.storage.StorageChange }, areaName),
-		);
+		changeListeners.forEach((listener) => {
+			listener(
+				{ [key]: { newValue, oldValue } as chrome.storage.StorageChange },
+				areaName,
+			);
+		});
 	};
 
 	return { store, dispatchChange };

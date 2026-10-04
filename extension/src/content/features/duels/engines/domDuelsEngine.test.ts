@@ -54,14 +54,23 @@ function buildRankingDOM(
         <tr><td>header 2</td></tr>
         ${knights
 					.map(
-						(k) => `
+						// Mirrors a live ranking row: rank, icon, name, level, loot, then
+						// fights/wins/losses. Levels used to be read from the column after
+						// the right one, which no test caught because this helper had the
+						// same layout as the code.
+						(k, index) => `
           <tr>
-            <td class="playerName">
+            <td class="highscore01">${1401 + index}</td>
+            <td class="highscore02"></td>
+            <td class="highscore03 playerName">
               <a id="playerLink" href="${k.profileUrl}">${k.name}</a>
               ${k.order ? `<a href="/order/1">${k.order}</a>` : ""}
             </td>
-            <td class="highscore05">${k.level}</td>
-            <td class="highscore06">${k.loot}</td>
+            <td class="highscore04">${k.level}</td>
+            <td class="highscore05">${k.loot}</td>
+            <td class="highscore06">236</td>
+            <td class="highscore07">235</td>
+            <td class="highscore08">1</td>
           </tr>
         `,
 					)
@@ -225,6 +234,137 @@ describe("DomDuelsEngine", () => {
 			});
 
 			expect(result.action).toBe("navigated");
+		});
+	});
+
+	describe("duel-refused — играта отказа дуела", () => {
+		it("разпознава error страницата и се връща към класацията", async () => {
+			setPathname("/common/error");
+
+			const navigateSpy = vi.spyOn(window.location, "href", "set");
+			const result = await engine.runStep(defaultSettings, {
+				...defaultContext,
+				currentEnemyName: "Some Knight",
+			});
+
+			expect(result.action).toBe("refused");
+			// Без ново изчакване — отказът не струва ход, минава се на следващия.
+			expect(result.waitMs).toBeUndefined();
+			expect(result.reason).toContain("Some Knight");
+			expect(navigateSpy).toHaveBeenCalledWith("/highscore/");
+		});
+
+		it("не избира рицар, при когото играта вече е отказала дуел", async () => {
+			setPathname("/highscore/");
+			buildRankingDOM("0", [
+				{
+					name: "Refused Knight",
+					level: 10,
+					loot: 100,
+					profileUrl:
+						"https://s26-bg.battleknight.gameforge.com:443/common/profile/111/Scores/Player",
+				},
+				{
+					name: "Next Knight",
+					level: 10,
+					loot: 100,
+					profileUrl:
+						"https://s26-bg.battleknight.gameforge.com:443/common/profile/222/Scores/Player",
+				},
+			]);
+
+			const result = await engine.runStep(defaultSettings, {
+				...defaultContext,
+				refusedEnemyIds: ["111"],
+			});
+
+			expect(result.action).toBe("navigated");
+			expect(result.knightId).toBe("222");
+		});
+	});
+
+	describe("handleRankingReady — четене на таблицата", () => {
+		it("не изпуска рицар, застанал на първия ред", async () => {
+			setPathname("/highscore/");
+			buildRankingDOM("0", [
+				{
+					name: "First Row Knight",
+					level: 10,
+					loot: 500,
+					profileUrl:
+						"https://s26-bg.battleknight.gameforge.com:443/common/profile/777/Scores/Player",
+				},
+			]);
+			// Класацията не винаги слага заглавни редове преди рицарите.
+			document.querySelectorAll("#highscoreTable tbody tr").forEach((row) => {
+				if (!row.querySelector("a#playerLink")) row.remove();
+			});
+
+			const result = await engine.runStep(defaultSettings, defaultContext);
+
+			expect(result.action).toBe("navigated");
+			expect(result.knightId).toBe("777");
+		});
+
+		it("пропуска заглавни и празни редове, без да ги брои за рицари", async () => {
+			setPathname("/highscore/");
+			buildRankingDOM("0", [
+				{
+					name: "Only Knight",
+					level: 99, // над levelMax, за да видим броя в съобщението
+					loot: 500,
+					profileUrl:
+						"https://s26-bg.battleknight.gameforge.com:443/common/profile/778/Scores/Player",
+				},
+			]);
+			document
+				.querySelector("#highscoreTable tbody")
+				?.insertAdjacentHTML("beforeend", "<tr><td></td></tr>");
+
+			const result = await engine.runStep(defaultSettings, defaultContext);
+
+			expect(result.reason).toContain("None of the 1 knights");
+		});
+	});
+
+	describe("handleRankingReady — причина за спиране", () => {
+		it("обяснява, че никой от рицарите не отговаря на филтрите", async () => {
+			setPathname("/highscore/");
+			buildRankingDOM("0", [
+				{
+					name: "Too High",
+					level: 99, // над levelMax: 15
+					loot: 100,
+					profileUrl:
+						"https://s26-bg.battleknight.gameforge.com:443/common/profile/1/Scores/Player",
+				},
+			]);
+
+			const result = await engine.runStep(defaultSettings, defaultContext);
+
+			expect(result.action).toBe("done");
+			expect(result.reason).toContain("matched your filters");
+		});
+
+		it("различава празна таблица от липса на подходящи рицари", async () => {
+			setPathname("/highscore/");
+			buildRankingDOM("0", []);
+
+			const result = await engine.runStep(defaultSettings, defaultContext);
+
+			expect(result.action).toBe("done");
+			expect(result.reason).toContain("Could not read any knights");
+		});
+
+		it("разпознава липсваща таблица", async () => {
+			setPathname("/highscore/");
+			buildRankingDOM("0", []);
+			document.querySelector("#highscoreTable")?.remove();
+
+			const result = await engine.runStep(defaultSettings, defaultContext);
+
+			expect(result.action).toBe("done");
+			expect(result.reason).toContain("Could not find the ranking table");
 		});
 	});
 

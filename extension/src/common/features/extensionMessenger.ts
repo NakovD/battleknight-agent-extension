@@ -1,4 +1,5 @@
 import type { ZodType } from "zod";
+import { sendRuntimeMessage } from "@/common/features/runtimeMessaging";
 import type {
 	ExtensionMessage,
 	ExtensionMessageResponse,
@@ -11,24 +12,10 @@ import {
 
 export const extensionMessenger: IExtensionMessenger = {
 	send: <T extends ZodType>(msg: ExtensionMessage<T>, schema: T) =>
-		new Promise<ExtensionMessageResponse<T>>((resolve, reject) => {
-			chrome.runtime.sendMessage<
-				ExtensionMessage<T>,
-				ExtensionMessageResponse<T>
-			>(msg, (raw) => {
-				if (chrome.runtime.lastError) {
-					reject(chrome.runtime.lastError.message);
-					return;
-				}
-				const result = getExtensionMessageResponseSchema(schema).safeParse(raw);
-
-				if (!result.success) {
-					reject(`Invalid response: ${result.error.message}`);
-					return;
-				}
-				resolve(result.data);
-			});
-		}),
+		sendRuntimeMessage(
+			msg,
+			getExtensionMessageResponseSchema(schema),
+		) as Promise<ExtensionMessageResponse<T>>,
 	listen: (handler, schema) => {
 		const listener = (raw: unknown) => {
 			const result = getExtensionMessageSchema(schema).safeParse(raw);

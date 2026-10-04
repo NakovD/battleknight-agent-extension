@@ -22,6 +22,8 @@ const runningState: DuelsExtensionState = {
 	lastAttackAt: "2026-08-05T10:40:15.516Z",
 	waitUntil: null,
 	currentEnemyName: null,
+	currentEnemyId: null,
+	refusedEnemyIds: [],
 	consecutiveNavigations: 0,
 };
 

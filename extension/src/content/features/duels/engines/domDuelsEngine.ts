@@ -1,5 +1,9 @@
 import type { DuelsSettings } from "@/common/features/duels/models/duelsSettings";
-import { domDuelsEngineConstants } from "@/content/features/duels/constants/domDuelsEngineConstants";
+import {
+	domDuelsEngineConstants,
+	profileLinkSelector,
+	rankingTableColumns,
+} from "@/content/features/duels/constants/domDuelsEngineConstants";
 import type {
 	IDuelsEngine,
 	IDuelsStepContext,
@@ -32,6 +36,9 @@ export class DomDuelsEngine implements IDuelsEngine {
 
 			case "duel-result":
 				return this.handleDuelResult(settings, context);
+
+			case "duel-refused":
+				return this.handleDuelRefused(context);
 
 			default:
 				navigateTo(domDuelsEngineConstants.rankingUrl);
@@ -75,19 +82,48 @@ export class DomDuelsEngine implements IDuelsEngine {
 			};
 		}
 
+		if (!document.querySelector("#highscoreTable tbody")) {
+			return {
+				action: "done",
+				reason:
+					"Could not find the ranking table on this page. The game's layout may have changed.",
+			};
+		}
+
 		const knights = scrapeKnights();
-		const target = findFirstValidTarget(knights, settings);
+
+		if (knights.length === 0) {
+			return {
+				action: "done",
+				reason:
+					"Could not read any knights from the ranking table. The game's layout may have changed.",
+			};
+		}
+
+		const target = findFirstValidTarget(
+			knights,
+			settings,
+			context.refusedEnemyIds,
+		);
 
 		if (!target) {
-			return { action: "done" };
+			// Shows what was actually scraped, so a column read from the wrong place
+			// can be told apart from filters that are genuinely too narrow.
+			console.log(
+				"[DomDuelsEngine] no match; first scraped knights:",
+				knights.slice(0, 5),
+				"settings:",
+				settings,
+			);
+
+			return {
+				action: "done",
+				reason: `None of the ${knights.length} knights on this ranking page matched your filters. Try another ranking page, or widen the level and loot range.`,
+			};
 		}
 
-		const enemyId = extractEnemyId(target.profileUrl);
-		if (!enemyId) {
-			return { action: "done" };
-		}
-
-		navigateTo(`${domDuelsEngineConstants.duelUrl}${enemyId}`);
+		// parseKnightRow already dropped any row whose profile link had no id.
+		navigateTo(`${domDuelsEngineConstants.duelUrl}${target.id}`);
 		return { action: "navigated", knightId: target.id, enemyName: target.name };
 	}
 
@@ -107,6 +143,29 @@ export class DomDuelsEngine implements IDuelsEngine {
 			waitMs: settings.cooldownMs,
 		};
 	}
+
+	// ── duel-refused: играта не допусна дуела ────────────────────────────────
+
+	/**
+	 * The game bounced the duel to its error page. Without this the agent went
+	 * straight back to the ranking, picked the same knight again and looped until
+	 * the circuit breaker stopped it — and no cooldown was ever recorded, because
+	 * that only happens after a duel result.
+	 */
+	private handleDuelRefused(
+		context: IDuelsStepContext,
+	): IDuelsEngineStepResult {
+		navigateTo(domDuelsEngineConstants.rankingUrl);
+
+		// No extra wait: a refusal costs nothing, so the next knight can be tried
+		// right away. Any cooldown still running from the last actual duel stays.
+		return {
+			action: "refused",
+			reason: context.currentEnemyName
+				? `The game refused the duel with ${context.currentEnemyName}. Moving on to the next knight.`
+				: "The game refused the duel. Moving on to the next knight.",
+		};
+	}
 }
 
 // ─── Разпознаване на страницата ───────────────────────────────────────────────
@@ -115,10 +174,13 @@ type PageKind =
 	| "ranking-unfiltered"
 	| "ranking-ready"
 	| "duel-result"
+	| "duel-refused"
 	| "unknown";
 
 function detectPage(settings: DuelsSettings): PageKind {
 	const path = window.location.pathname;
+
+	if (path.includes(domDuelsEngineConstants.errorPath)) return "duel-refused";
 
 	if (path.includes("/duel/duel")) return "duel-result";
 
@@ -151,13 +213,15 @@ interface ScrapedKnight {
 }
 
 function scrapeKnights(): ScrapedKnight[] {
-	const allRows = document.querySelectorAll<HTMLElement>(
+	const rows = document.querySelectorAll<HTMLElement>(
 		"#highscoreTable tbody tr",
 	);
-	const knightRows = Array.from(allRows).slice(2);
 
+	// Header and spacer rows are recognised by having no player link rather than by
+	// position: the ranking doesn't always put the same number of them first, and
+	// skipping a fixed two dropped real knights on pages that had fewer.
 	const knights: ScrapedKnight[] = [];
-	knightRows.forEach((row) => {
+	rows.forEach((row) => {
 		const knight = parseKnightRow(row);
 		if (knight) knights.push(knight);
 	});
@@ -165,12 +229,21 @@ function scrapeKnights(): ScrapedKnight[] {
 	return knights;
 }
 
+const parseNumericCell = (row: HTMLElement, selector: string) => {
+	const text = row.querySelector<HTMLElement>(selector)?.textContent?.trim() ?? "0";
+
+	// Thousand separators and any stray markup around the number.
+	return parseInt(text.replace(/\D/g, ""), 10) || 0;
+};
+
 function parseKnightRow(row: HTMLElement): ScrapedKnight | null {
-	const playerTd = row.querySelector<HTMLElement>("td.playerName");
+	const playerTd = row.querySelector<HTMLElement>(
+		rankingTableColumns.playerName,
+	);
 	if (!playerTd) return null;
 
 	const profileAnchor =
-		playerTd.querySelector<HTMLAnchorElement>("a#playerLink");
+		playerTd.querySelector<HTMLAnchorElement>(profileLinkSelector);
 	if (!profileAnchor) return null;
 
 	const profileUrl = profileAnchor.href;
@@ -179,18 +252,15 @@ function parseKnightRow(row: HTMLElement): ScrapedKnight | null {
 	const enemyId = extractEnemyId(profileUrl);
 	if (!enemyId) return null;
 
-	// Орден — втори <a> в playerTd без id="playerLink"
+	// Орден — всеки друг <a> в клетката с името
 	const allAnchors = playerTd.querySelectorAll<HTMLAnchorElement>("a");
-	const orderAnchor = Array.from(allAnchors).find((a) => a.id !== "playerLink");
+	const orderAnchor = Array.from(allAnchors).find(
+		(anchor) => anchor !== profileAnchor,
+	);
 	const order = orderAnchor?.textContent?.trim() || null;
 
-	const levelText =
-		row.querySelector<HTMLElement>("td.highscore05")?.textContent?.trim() ?? "0";
-	const level = parseInt(levelText.replace(/\D/g, ""), 10) || 0;
-
-	const lootText =
-		row.querySelector<HTMLElement>("td.highscore06")?.textContent?.trim() ?? "0";
-	const loot = parseInt(lootText.replace(/\D/g, ""), 10) || 0;
+	const level = parseNumericCell(row, rankingTableColumns.level);
+	const loot = parseNumericCell(row, rankingTableColumns.loot);
 
 	return { id: enemyId, name, level, loot, order, profileUrl };
 }
@@ -200,9 +270,13 @@ function parseKnightRow(row: HTMLElement): ScrapedKnight | null {
 function findFirstValidTarget(
 	knights: ScrapedKnight[],
 	settings: DuelsSettings,
+	refusedEnemyIds: string[] = [],
 ): ScrapedKnight | null {
 	return (
 		knights.find((k) => {
+			// The game already turned this duel down; trying again would just loop.
+			if (refusedEnemyIds.includes(k.id)) return false;
+
 			if (k.level < settings.levelMin || k.level > settings.levelMax)
 				return false;
 			if (settings.lootFilterEnabled && k.loot > settings.lootMax) return false;

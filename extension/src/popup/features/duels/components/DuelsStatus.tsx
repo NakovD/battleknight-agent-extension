@@ -6,9 +6,15 @@ import { formatNumberAdvanced } from "@/popup/utilities/formatUtility";
 interface IDuelsStatusProps {
 	settings: DuelsSettings;
 	onStop: () => void;
+	/** Set when the agent started but the settings couldn't be synced. */
+	warning?: string | null;
 }
 
-export const DuelsStatus = ({ settings, onStop }: IDuelsStatusProps) => (
+export const DuelsStatus = ({
+	settings,
+	onStop,
+	warning,
+}: IDuelsStatusProps) => (
 	<div className="flex flex-col gap-4 p-4">
 		<div className="flex items-center gap-2.5">
 			<span className="relative flex h-2 w-2">
@@ -19,6 +25,12 @@ export const DuelsStatus = ({ settings, onStop }: IDuelsStatusProps) => (
 				Extension is running
 			</span>
 		</div>
+
+		{warning && (
+			<p role="alert" className="text-[11px] text-amber-500/80">
+				{warning}
+			</p>
+		)}
 
 		<div className="h-px bg-linear-to-r from-transparent via-amber-900/40 to-transparent" />
 

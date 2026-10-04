@@ -10,12 +10,14 @@ import { withPreventDefaultAndCb } from "@/popup/utilities/domEventUtility";
 
 interface IDuelsFormProps {
 	onSubmit: (values: DuelsFormType) => void;
+	/** Settings restored from the signed-in account, if any. */
+	defaultValues?: DuelsFormType;
 }
 
-export const DuelsForm = ({ onSubmit }: IDuelsFormProps) => {
+export const DuelsForm = ({ onSubmit, defaultValues }: IDuelsFormProps) => {
 	const form = useDuelsForm({
 		validators: { onChange: duelsFormValidator },
-		defaultValues: duelsFormDefaultValues,
+		defaultValues: defaultValues ?? duelsFormDefaultValues,
 		onSubmit: (form) => onSubmit(form.value),
 	});
 
@@ -32,10 +34,9 @@ export const DuelsForm = ({ onSubmit }: IDuelsFormProps) => {
 			<div className="py-2" />
 			<form.Subscribe
 				children={(state) => (
-					<Button
-						type="submit"
-						disabled={!(state.isFieldsValid && state.isDirty)}
-					>
+					// Not gated on isDirty: settings restored from an account are ready to
+					// start as they are, without the user having to change something first.
+					<Button type="submit" disabled={!state.isFieldsValid}>
 						Start extension
 					</Button>
 				)}
