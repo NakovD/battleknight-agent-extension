@@ -33,6 +33,9 @@ builder.Services
 
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddSingleton<ITokenService, TokenService>();
+builder.Services.AddSingleton(TimeProvider.System);
+// Scoped: it works through the request's AppDbContext.
+builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

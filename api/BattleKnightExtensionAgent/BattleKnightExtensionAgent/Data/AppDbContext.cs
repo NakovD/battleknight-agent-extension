@@ -9,9 +9,29 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<DuelsSettings> DuelsSettings => Set<DuelsSettings>();
 
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<RefreshToken>(token =>
+        {
+            token.HasKey(t => t.Id);
+
+            token.Property(t => t.TokenHash).IsRequired().HasMaxLength(64);
+
+            // Looked up by hash on every refresh, and no two tokens may share one.
+            token.HasIndex(t => t.TokenHash).IsUnique();
+
+            // Revoking every token a user has is a single indexed lookup.
+            token.HasIndex(t => t.UserId);
+
+            token.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
         modelBuilder.Entity<DuelsSettings>(settings =>
         {

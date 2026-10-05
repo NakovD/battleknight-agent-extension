@@ -34,6 +34,16 @@ internal static class AuthApiClientExtensions
         return (await response.Content.ReadFromJsonAsync<AuthResponse>())!;
     }
 
+    public static Task<HttpResponseMessage> RefreshAsync(
+        this HttpClient client,
+        string refreshToken) =>
+        client.PostAsJsonAsync("/auth/refresh", new { refreshToken });
+
+    public static Task<HttpResponseMessage> LogoutAsync(
+        this HttpClient client,
+        string refreshToken) =>
+        client.PostAsJsonAsync("/auth/logout", new { refreshToken });
+
     public static Task<HttpResponseMessage> GetCurrentUserAsync(this HttpClient client, string? accessToken)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, "/auth/me");
