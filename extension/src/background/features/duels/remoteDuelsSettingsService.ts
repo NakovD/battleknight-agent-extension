@@ -1,4 +1,4 @@
-import type { IAuthSessionStore } from "@/background/features/auth/models/authSessionStore";
+import type { IAccessTokenProvider } from "@/background/features/auth/models/accessTokenProvider";
 import type { IDuelsSettingsApiClient } from "@/background/features/duels/models/duelsSettingsApiClient";
 import { UnauthorizedApiError } from "@/background/models/apiError";
 import type { DuelsSettings } from "@/common/features/duels/models/duelsSettings";
@@ -12,7 +12,7 @@ import type { DuelsSettings } from "@/common/features/duels/models/duelsSettings
 export class RemoteDuelsSettingsService {
 	constructor(
 		private readonly api: IDuelsSettingsApiClient,
-		private readonly sessions: IAuthSessionStore,
+		private readonly tokens: IAccessTokenProvider,
 	) {}
 
 	load(): Promise<DuelsSettings | null> {
@@ -20,25 +20,41 @@ export class RemoteDuelsSettingsService {
 	}
 
 	save(settings: DuelsSettings): Promise<DuelsSettings | null> {
-		return this.withSession((accessToken) => this.api.save(accessToken, settings));
+		return this.withSession((accessToken) =>
+			this.api.save(accessToken, settings),
+		);
 	}
 
 	private async withSession(
 		call: (accessToken: string) => Promise<DuelsSettings | null>,
 	): Promise<DuelsSettings | null> {
-		const session = await this.sessions.get();
+		const accessToken = await this.tokens.getAccessToken();
 
-		if (!session) {
+		if (!accessToken) {
 			return null;
 		}
 
 		try {
-			return await call(session.accessToken);
+			return await call(accessToken);
 		} catch (error) {
-			// The token is gone or no longer valid; drop it so the popup shows the
-			// sign-in form instead of failing on every request.
+			if (!(error instanceof UnauthorizedApiError)) {
+				throw error;
+			}
+		}
+
+		// The token looked valid but was refused — a clock that drifted, or a server
+		// restarted with a new signing key. Worth one renewal and one retry; a second
+		// refusal means the session really is over.
+		const renewed = await this.tokens.refreshAccessToken();
+
+		if (!renewed) {
+			return null;
+		}
+
+		try {
+			return await call(renewed);
+		} catch (error) {
 			if (error instanceof UnauthorizedApiError) {
-				await this.sessions.clear();
 				return null;
 			}
 

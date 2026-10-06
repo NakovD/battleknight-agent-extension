@@ -1,8 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { UnauthorizedApiError } from "@/background/models/apiError";
 import { FetchAuthApiClient } from "./fetchAuthApiClient";
 import { AuthApiError } from "./models/authApiClient";
 
-const credentials = { email: "knight@example.com", password: "super-secret-passphrase" };
+const credentials = {
+	email: "knight@example.com",
+	password: "super-secret-passphrase",
+};
+
+const issuedToken = {
+	accessToken: "token",
+	expiresAt: "2026-09-24T10:00:00Z",
+	refreshToken: "refresh-token",
+	refreshTokenExpiresAt: "2026-10-24T10:00:00Z",
+};
 
 const jsonResponse = (status: number, body: unknown) =>
 	new Response(JSON.stringify(body), {
@@ -23,14 +34,12 @@ describe("FetchAuthApiClient", () => {
 	});
 
 	it("login праща POST с JSON тяло към /auth/login и връща токена", async () => {
-		fetchMock.mockResolvedValue(
-			jsonResponse(200, { accessToken: "token", expiresAt: "2026-09-24T10:00:00Z" }),
-		);
+		fetchMock.mockResolvedValue(jsonResponse(200, issuedToken));
 		const client = new FetchAuthApiClient("http://localhost:5224");
 
 		const token = await client.login(credentials);
 
-		expect(token).toEqual({ accessToken: "token", expiresAt: "2026-09-24T10:00:00Z" });
+		expect(token).toEqual(issuedToken);
 		expect(fetchMock).toHaveBeenCalledWith("http://localhost:5224/auth/login", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
@@ -39,23 +48,58 @@ describe("FetchAuthApiClient", () => {
 	});
 
 	it("register вика /auth/register", async () => {
-		fetchMock.mockResolvedValue(
-			jsonResponse(200, { accessToken: "token", expiresAt: "2026-09-24T10:00:00Z" }),
-		);
+		fetchMock.mockResolvedValue(jsonResponse(200, issuedToken));
 
 		await new FetchAuthApiClient("http://localhost:5224").register(credentials);
 
-		expect(fetchMock.mock.calls[0][0]).toBe("http://localhost:5224/auth/register");
+		expect(fetchMock.mock.calls[0][0]).toBe(
+			"http://localhost:5224/auth/register",
+		);
 	});
 
 	it("маха наклонената черта в края на адреса", async () => {
-		fetchMock.mockResolvedValue(
-			jsonResponse(200, { accessToken: "token", expiresAt: "2026-09-24T10:00:00Z" }),
-		);
+		fetchMock.mockResolvedValue(jsonResponse(200, issuedToken));
 
 		await new FetchAuthApiClient("http://localhost:5224/").login(credentials);
 
 		expect(fetchMock.mock.calls[0][0]).toBe("http://localhost:5224/auth/login");
+	});
+
+	it("refresh праща refresh токена към /auth/refresh и връща новата двойка", async () => {
+		fetchMock.mockResolvedValue(jsonResponse(200, issuedToken));
+
+		const token = await new FetchAuthApiClient("http://api").refresh(
+			"old-token",
+		);
+
+		expect(token).toEqual(issuedToken);
+		expect(fetchMock).toHaveBeenCalledWith("http://api/auth/refresh", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ refreshToken: "old-token" }),
+		});
+	});
+
+	it("отхвърленият refresh токен е UnauthorizedApiError, не обикновена грешка", async () => {
+		// Повикващият го различава от мрежова грешка: сесията е свършила и няма
+		// какво да се подновява.
+		fetchMock.mockResolvedValue(new Response(null, { status: 401 }));
+
+		await expect(
+			new FetchAuthApiClient("http://api").refresh("old-token"),
+		).rejects.toThrow(UnauthorizedApiError);
+	});
+
+	it("logout праща токена към /auth/logout", async () => {
+		fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+		await new FetchAuthApiClient("http://api").logout("refresh-token");
+
+		expect(fetchMock).toHaveBeenCalledWith("http://api/auth/logout", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ refreshToken: "refresh-token" }),
+		});
 	});
 
 	it("превежда 401 при login в съобщение за грешни данни", async () => {
@@ -128,9 +172,9 @@ describe("FetchAuthApiClient", () => {
 	});
 
 	it("не прави заявка, ако адресът на API-то не е конфигуриран", async () => {
-		await expect(new FetchAuthApiClient(undefined).login(credentials)).rejects.toThrow(
-			"The API address is not configured (VITE_API_BASE_URL).",
-		);
+		await expect(
+			new FetchAuthApiClient(undefined).login(credentials),
+		).rejects.toThrow("The API address is not configured (VITE_API_BASE_URL).");
 		expect(fetchMock).not.toHaveBeenCalled();
 	});
 });

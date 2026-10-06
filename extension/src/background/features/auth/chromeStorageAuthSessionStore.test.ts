@@ -8,6 +8,8 @@ import {
 const session = {
 	accessToken: "token",
 	expiresAt: "2026-09-24T10:00:00Z",
+	refreshToken: "refresh-token",
+	refreshTokenExpiresAt: "2026-10-24T10:00:00Z",
 	email: "knight@example.com",
 };
 
@@ -42,6 +44,15 @@ describe("ChromeStorageAuthSessionStore", () => {
 
 	it("третира повредена стойност като липсваща сесия", async () => {
 		chromeStorage.store[AUTH_SESSION_STORAGE_KEY] = { accessToken: "" };
+
+		expect(await store.get()).toBeNull();
+	});
+
+	it("третира сесия без refresh токен като липсваща", async () => {
+		// Записана преди refresh токените; няма как да се поднови, затова се
+		// изисква повторно влизане.
+		const { refreshToken, refreshTokenExpiresAt, ...legacy } = session;
+		chromeStorage.store[AUTH_SESSION_STORAGE_KEY] = legacy;
 
 		expect(await store.get()).toBeNull();
 	});

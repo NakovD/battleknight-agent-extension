@@ -33,19 +33,34 @@ export const accountValidator = discriminatedUnion("status", [
 	object({
 		status: literal("signedIn"),
 		email: string(),
+		/**
+		 * When the session itself runs out, not the short-lived access token —
+		 * that one gets renewed in the background and is of no interest here.
+		 */
 		expiresAt: string(),
 	}),
 ]);
 
-/** What the background keeps in chrome.storage for a signed-in user. */
+/**
+ * What the background keeps in chrome.storage for a signed-in user.
+ *
+ * A session stored before refresh tokens existed has no refreshToken, so it
+ * fails to parse and the user is asked to sign in once more. That beats keeping
+ * a session that can never renew itself.
+ */
 export const authSessionValidator = object({
 	accessToken: string().min(1),
 	expiresAt: string(),
+	refreshToken: string().min(1),
+	refreshTokenExpiresAt: string(),
 	email: string(),
 });
 
 export const authMessageValidator = discriminatedUnion("type", [
-	object({ type: literal("AUTH_REGISTER"), payload: registerCredentialsValidator }),
+	object({
+		type: literal("AUTH_REGISTER"),
+		payload: registerCredentialsValidator,
+	}),
 	object({ type: literal("AUTH_LOGIN"), payload: loginCredentialsValidator }),
 	object({ type: literal("AUTH_LOGOUT") }),
 	object({ type: literal("AUTH_GET_ACCOUNT") }),
