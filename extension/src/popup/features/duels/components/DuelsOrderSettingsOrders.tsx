@@ -4,6 +4,7 @@ import { Input } from "@/popup/components/common/form/Input";
 import { Label } from "@/popup/components/common/form/Label";
 import { duelsFormDefaultValues } from "@/popup/features/duels/constants/duelsFormDefaultValues";
 import { withDuelsForm } from "@/popup/features/duels/form/duelsContext";
+import { firstErrorMessage } from "@/popup/utilities/formErrorUtility";
 
 export const DuelsOrderSettingsOrders = withDuelsForm({
 	defaultValues: duelsFormDefaultValues,
@@ -20,6 +21,7 @@ export const DuelsOrderSettingsOrders = withDuelsForm({
 							children={(arrayField) => (
 								<>
 									<IconButton
+										aria-label="Add order"
 										className="absolute top-6 right-0"
 										onClick={() => arrayField.pushValue({ name: "" })}
 									>
@@ -43,8 +45,15 @@ export const DuelsOrderSettingsOrders = withDuelsForm({
 															onChange={(e) =>
 																subfield.setValue(e.target.value)
 															}
+															// Shown without waiting for a blur: the row exists
+															// because the user added it, and an empty one already
+															// disables Start — so the reason has to be on screen.
+															error={firstErrorMessage(
+																subfield.state.meta.errors,
+															)}
 														/>
 														<IconButton
+															aria-label={`Remove order ${index + 1}`}
 															className="shrink-0"
 															onClick={() => arrayField.removeValue(index)}
 														>
@@ -55,6 +64,15 @@ export const DuelsOrderSettingsOrders = withDuelsForm({
 											/>
 										))}
 									</div>
+
+									{firstErrorMessage(arrayField.state.meta.errors) && (
+										<p
+											role="alert"
+											className="pt-2 text-[10px] text-red-500/80"
+										>
+											{firstErrorMessage(arrayField.state.meta.errors)}
+										</p>
+									)}
 								</>
 							)}
 						/>

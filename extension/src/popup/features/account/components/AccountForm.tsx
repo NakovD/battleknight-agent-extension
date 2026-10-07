@@ -9,6 +9,7 @@ import { Input } from "@/popup/components/common/form/Input";
 import { Label } from "@/popup/components/common/form/Label";
 import { Heading } from "@/popup/components/common/headings/Heading";
 import { withPreventDefaultAndCb } from "@/popup/utilities/domEventUtility";
+import { firstErrorMessage } from "@/popup/utilities/formErrorUtility";
 
 export type AccountFormMode = "login" | "register";
 
@@ -21,13 +22,6 @@ interface IAccountFormProps {
 	) => void;
 	onModeChange: () => void;
 }
-
-const firstErrorMessage = (errors: unknown[]) => {
-	const [first] = errors;
-	if (!first) return undefined;
-	if (typeof first === "string") return first;
-	return (first as { message?: string }).message;
-};
 
 export const AccountForm = ({
 	error,
