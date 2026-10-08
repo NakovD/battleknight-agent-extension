@@ -19,7 +19,8 @@ const authService = new AuthService(
 
 const remoteSettings = new RemoteDuelsSettingsService(
 	new FetchDuelsSettingsApiClient(import.meta.env.VITE_API_BASE_URL),
-	sessions,
+	// The auth service hands out access tokens and renews them when they age out.
+	authService,
 );
 
 const messageHandlers: MessageHandler[] = [

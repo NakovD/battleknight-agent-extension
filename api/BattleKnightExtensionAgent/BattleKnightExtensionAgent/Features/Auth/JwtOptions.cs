@@ -21,9 +21,12 @@ public sealed class JwtOptions
     public string Audience { get; init; } = string.Empty;
 
     /// <summary>
-    /// Long-lived for now because there are no refresh tokens yet; shorten this
-    /// once refresh tokens land.
+    /// Short by design: an access token can't be revoked, so it is the refresh
+    /// token's lifetime that decides how long a session lasts.
     /// </summary>
-    [Range(1, 60 * 24 * 30)]
-    public int ExpiryMinutes { get; init; } = 60 * 24 * 7;
+    [Range(1, 60 * 24)]
+    public int AccessTokenMinutes { get; init; } = 15;
+
+    [Range(1, 365)]
+    public int RefreshTokenDays { get; init; } = 30;
 }

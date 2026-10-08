@@ -12,7 +12,7 @@ public sealed class TokenService(IOptions<JwtOptions> options) : ITokenService
 
     public AccessToken CreateAccessToken(User user)
     {
-        var expiresAt = DateTimeOffset.UtcNow.AddMinutes(_options.ExpiryMinutes);
+        var expiresAt = DateTimeOffset.UtcNow.AddMinutes(_options.AccessTokenMinutes);
 
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Key));
 

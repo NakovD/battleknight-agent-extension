@@ -5,6 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import zip from "vite-plugin-zip-pack";
+import { findReactDuplication } from "./build/assertSingleReact";
 import manifest from "./manifest.config.js";
 import { name, version } from "./package.json";
 
@@ -18,10 +19,46 @@ export default defineConfig({
 		alias: {
 			"@": `${path.resolve(__dirname, "src")}`,
 		},
+		// Windows reports this project's path with either drive-letter case, and a
+		// build that sees both resolves react twice — "C:/…/react.production.js"
+		// and "c:/…/react.production.js" are one file but two module ids, so each
+		// gets its own instance and hooks blow up in the browser. Deduping pins
+		// them to one copy resolved from the project root.
+		dedupe: ["react", "react-dom", "scheduler"],
 	},
 	plugins: [
 		react(),
 		crx({ manifest }),
+		{
+			// Twice now a duplicated React has shipped and only shown up as an empty
+			// popup in the browser. Cheaper to fail the build.
+			name: "assert-single-react",
+			// Nothing to check while serving or testing, and vitest reads this same
+			// config — so stay out of its way entirely.
+			apply: "build",
+			generateBundle(_options, bundle) {
+				const chunks = Object.fromEntries(
+					Object.entries(bundle)
+						.filter(([, output]) => output.type === "chunk")
+						.map(([file, output]) => [
+							file,
+							Object.keys(
+								(output as { modules: Record<string, unknown> }).modules,
+							),
+						]),
+				);
+
+				const problems = findReactDuplication(chunks);
+
+				if (problems.length > 0) {
+					this.error(
+						["React would be bundled more than once:", ...problems].join(
+							"\n  - ",
+						),
+					);
+				}
+			},
+		},
 		zip({ outDir: "release", outFileName: `crx-${name}-${version}.zip` }),
 		tailwindcss(),
 	],

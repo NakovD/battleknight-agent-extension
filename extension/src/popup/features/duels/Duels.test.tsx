@@ -158,4 +158,72 @@ describe("Duels", () => {
 			"Your session has expired.",
 		);
 	});
+
+	describe("имена на ордени", () => {
+		/** Вдига двата ключа, след което редовете за ордени се показват. */
+		const openOrders = async () => {
+			settingsSend.mockResolvedValue({ ok: true, settings: savedSettings });
+
+			render(<Duels />);
+			await screen.findByRole("button", { name: "Start extension" });
+
+			fireEvent.click(screen.getByLabelText("Skip with order"));
+			fireEvent.click(await screen.findByLabelText("Skip specific orders"));
+		};
+
+		it("празен ред изключва Start и казва защо", async () => {
+			await openOrders();
+
+			// Бутонът "+" е единственият път до нов ред и го добавя празен.
+			fireEvent.click(screen.getByRole("button", { name: "Add order" }));
+
+			expect(
+				await screen.findByText("Enter an order name or remove the row"),
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole("button", { name: "Start extension" }),
+			).toBeDisabled();
+		});
+
+		it("попълването на името връща Start", async () => {
+			await openOrders();
+			fireEvent.click(screen.getByRole("button", { name: "Add order" }));
+			await screen.findByText("Enter an order name or remove the row");
+
+			fireEvent.change(screen.getByPlaceholderText("Order name..."), {
+				target: { value: "Тамплиери" },
+			});
+
+			await waitFor(() =>
+				expect(
+					screen.getByRole("button", { name: "Start extension" }),
+				).toBeEnabled(),
+			);
+			expect(
+				screen.queryByText("Enter an order name or remove the row"),
+			).not.toBeInTheDocument();
+		});
+
+		it("праща името изчистено от интервали", async () => {
+			await openOrders();
+			fireEvent.click(screen.getByRole("button", { name: "Add order" }));
+			fireEvent.change(screen.getByPlaceholderText("Order name..."), {
+				target: { value: "  Тамплиери  " },
+			});
+
+			const start = screen.getByRole("button", { name: "Start extension" });
+			await waitFor(() => expect(start).toBeEnabled());
+			fireEvent.click(start);
+
+			await waitFor(() =>
+				expect(agentSend).toHaveBeenCalledWith(
+					expect.objectContaining({
+						type: "START_AGENT",
+						payload: expect.objectContaining({ ordersToSkip: ["Тамплиери"] }),
+					}),
+					expect.anything(),
+				),
+			);
+		});
+	});
 });

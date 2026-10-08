@@ -126,4 +126,36 @@ describe("duelsSettingsValidator", () => {
 
 		expect(result.success).toBe(false);
 	});
+
+	describe("ordersToSkip", () => {
+		const parseOrders = (ordersToSkip: string[]) => {
+			const result = duelsSettingsValidator.safeParse({
+				...validSettings,
+				ordersToSkip,
+			});
+
+			expect(result.success).toBe(true);
+
+			return result.data?.ordersToSkip;
+		};
+
+		it("изчиства интервалите около имената", () => {
+			// Енджинът сравнява с изчистено име, взето от страницата, затова
+			// непочистено име никога не би съвпаднало.
+			expect(parseOrders(["  Тамплиери  "])).toEqual(["Тамплиери"]);
+		});
+
+		it("изхвърля празните имена, вместо да отхвърли целия обект", () => {
+			// Настройки, записани от по-стара версия, се четат обратно през тази
+			// схема — отхвърлянето им би счупило попъпа.
+			expect(parseOrders(["Тамплиери", "", "   "])).toEqual(["Тамплиери"]);
+		});
+
+		it("оставя нормалните имена непокътнати", () => {
+			expect(parseOrders(["Тамплиери", "Hospitallers"])).toEqual([
+				"Тамплиери",
+				"Hospitallers",
+			]);
+		});
+	});
 });

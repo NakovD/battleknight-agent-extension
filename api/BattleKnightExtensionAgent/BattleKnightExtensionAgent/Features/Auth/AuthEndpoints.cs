@@ -26,9 +26,47 @@ public static class AuthEndpoints
 
         group.MapPost("/register", RegisterAsync).WithName("Register");
         group.MapPost("/login", LoginAsync).WithName("Login");
+        group.MapPost("/refresh", RefreshAsync).WithName("Refresh");
+        group.MapPost("/logout", LogoutAsync).WithName("Logout");
         group.MapGet("/me", GetCurrentUser).WithName("CurrentUser").RequireAuthorization();
 
         return app;
+    }
+
+    /// <summary>
+    /// Trades a refresh token for a new pair. Deliberately unauthenticated: the whole
+    /// point is to call it once the access token has expired.
+    /// </summary>
+    private static async Task<Results<Ok<AuthResponse>, UnauthorizedHttpResult>> RefreshAsync(
+        RefreshRequest request,
+        IRefreshTokenService refreshTokens,
+        ITokenService tokenService,
+        CancellationToken cancellationToken)
+    {
+        var rotated = await refreshTokens.RotateAsync(request.RefreshToken, cancellationToken);
+
+        if (rotated is null)
+        {
+            return TypedResults.Unauthorized();
+        }
+
+        return TypedResults.Ok(CreateResponse(
+            tokenService.CreateAccessToken(rotated.User),
+            rotated.RefreshToken));
+    }
+
+    /// <summary>
+    /// Always answers 204, whether or not the token was valid: there is nothing for
+    /// the caller to do differently, and saying which tokens exist helps nobody.
+    /// </summary>
+    private static async Task<NoContent> LogoutAsync(
+        RefreshRequest request,
+        IRefreshTokenService refreshTokens,
+        CancellationToken cancellationToken)
+    {
+        await refreshTokens.RevokeAsync(request.RefreshToken, cancellationToken);
+
+        return TypedResults.NoContent();
     }
 
     private static async Task<Results<Ok<AuthResponse>, Conflict<string>>> RegisterAsync(
@@ -36,6 +74,7 @@ public static class AuthEndpoints
         AppDbContext db,
         IPasswordHasher<User> passwordHasher,
         ITokenService tokenService,
+        IRefreshTokenService refreshTokens,
         CancellationToken cancellationToken)
     {
         var email = NormalizeEmail(request.Email);
@@ -51,9 +90,9 @@ public static class AuthEndpoints
         db.Users.Add(user);
         await db.SaveChangesAsync(cancellationToken);
 
-        var token = tokenService.CreateAccessToken(user);
-
-        return TypedResults.Ok(new AuthResponse(token.Value, token.ExpiresAt));
+        return TypedResults.Ok(CreateResponse(
+            tokenService.CreateAccessToken(user),
+            await refreshTokens.IssueAsync(user, cancellationToken)));
     }
 
     private static async Task<Results<Ok<AuthResponse>, UnauthorizedHttpResult>> LoginAsync(
@@ -61,6 +100,7 @@ public static class AuthEndpoints
         AppDbContext db,
         IPasswordHasher<User> passwordHasher,
         ITokenService tokenService,
+        IRefreshTokenService refreshTokens,
         CancellationToken cancellationToken)
     {
         var email = NormalizeEmail(request.Email);
@@ -86,10 +126,19 @@ public static class AuthEndpoints
             await db.SaveChangesAsync(cancellationToken);
         }
 
-        var token = tokenService.CreateAccessToken(user);
-
-        return TypedResults.Ok(new AuthResponse(token.Value, token.ExpiresAt));
+        return TypedResults.Ok(CreateResponse(
+            tokenService.CreateAccessToken(user),
+            await refreshTokens.IssueAsync(user, cancellationToken)));
     }
+
+    private static AuthResponse CreateResponse(
+        AccessToken accessToken,
+        IssuedRefreshToken refreshToken) =>
+        new(
+            accessToken.Value,
+            accessToken.ExpiresAt,
+            refreshToken.Value,
+            refreshToken.ExpiresAt);
 
     private static async Task<Results<Ok<UserInfoResponse>, UnauthorizedHttpResult>> GetCurrentUser(
         ClaimsPrincipal principal,

@@ -14,7 +14,10 @@ export const mapFormToSettings = (values: DuelsForm): DuelsSettings => ({
 	lootMax: values.maxLoot,
 	skipAllOrders: values.skipWithOrder,
 	skipSpecificOrders: values.skipSpecificOrders,
-	ordersToSkip: values.specificOrders.map((o) => o.name),
+	// Trimmed to match the names scraped from the page, which the engine trims
+	// too. The API trims on save as well, so a signed-in user got this for free
+	// while a signed-out one silently never matched.
+	ordersToSkip: values.specificOrders.map((o) => o.name.trim()),
 	cooldownMs: values.cooldownMinutes * MILLISECONDS_PER_MINUTE,
 	rankingOffset: Number(values.page.value) * RANKING_PAGE_SIZE,
 });

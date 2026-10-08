@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Time.Testing;
 
 namespace BattleKnightExtensionAgent.Tests.Infrastructure;
 
@@ -26,6 +27,12 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     /// connection is held open for the lifetime of the factory.
     /// </summary>
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
+
+    /// <summary>
+    /// Lets tests move time forward, which is the only practical way to reach a
+    /// refresh token's expiry.
+    /// </summary>
+    public FakeTimeProvider Time { get; } = new(DateTimeOffset.UtcNow);
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -49,6 +56,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<IDbContextOptionsConfiguration<AppDbContext>>();
 
             services.AddDbContext<AppDbContext>(options => options.UseSqlite(_connection));
+
+            services.RemoveAll<TimeProvider>();
+            services.AddSingleton<TimeProvider>(Time);
         });
     }
 
