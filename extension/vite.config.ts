@@ -19,6 +19,12 @@ export default defineConfig({
 		alias: {
 			"@": `${path.resolve(__dirname, "src")}`,
 		},
+		// Windows reports this project's path with either drive-letter case, and a
+		// build that sees both resolves react twice — "C:/…/react.production.js"
+		// and "c:/…/react.production.js" are one file but two module ids, so each
+		// gets its own instance and hooks blow up in the browser. Deduping pins
+		// them to one copy resolved from the project root.
+		dedupe: ["react", "react-dom", "scheduler"],
 	},
 	plugins: [
 		react(),

@@ -103,26 +103,42 @@ Expect exactly one `node_modules/react/cjs/react.production.js`, in one chunk.
 
 ## The fix, in the order to try it
 
-1. **Delete the dev-server pre-bundle cache and rebuild.** This has fixed it
-   every time so far. `node_modules/.vite/deps/` can hold its own `react.js`,
-   and a production build resolving through it picks up a second copy.
+1. **Read the two paths the guard printed and compare them character by
+   character.** The cause found in this project was a *drive-letter case*
+   mismatch — the same file counted twice:
 
-   ```bash
-   cd extension && rm -rf node_modules/.vite dist && npm run build
+   ```
+   React is bundled from 2 different files:
+     C:/Users/.../node_modules/react/cjs/react.production.js,
+     c:/Users/.../node_modules/react/cjs/react.production.js
    ```
 
-   Be straight about the limits of this: the duplicated build has not been
-   reproduced on demand. It appeared twice, both times in a shell call that ran
-   the test suite immediately before the build, and it did not come back when
-   that same sequence was repeated deliberately. So the cache is the mechanism
-   and clearing it is the remedy, but the trigger is intermittent and unproven.
-   The build guard is what makes that acceptable — it cannot reach the browser
-   unnoticed any more.
+   Windows reports this path with either case, and rolldown keys modules by id
+   string, so one file becomes two instances. `resolve.dedupe` in
+   `vite.config.ts` pins react, react-dom and scheduler to one copy resolved
+   from the project root; if the guard still fires with two case-differing
+   paths, that setting has been lost.
 
-   A whole vitest suite failing to collect with `Tests  no tests` has shown up
-   in the same window. If both happen together, clear the cache first.
+   Trust the printed paths over any theory. An earlier version of this skill
+   blamed the dev-server pre-bundle cache; when the failure was finally caught
+   in the act, `node_modules/.vite/deps/` was empty and the real difference was
+   the drive letter.
 
-2. **Check for a second React install:** `node versions` mismatch between
+2. **Clear the caches and rebuild** — cheap, and rules out a stale pre-bundle
+   that carries its own `react.js`:
+
+   ```bash
+   cd extension && rm -rf node_modules/.vite node_modules/.vite-temp dist && npm run build
+   ```
+
+   The failure is intermittent: it has only ever appeared in a shell call that
+   ran the test suite immediately before the build, and repeating that sequence
+   deliberately does not bring it back. A whole vitest suite failing to collect
+   with `Tests  no tests` has shown up in the same window. The build guard is
+   what makes the intermittency tolerable — it cannot reach the browser
+   unnoticed.
+
+3. **Check for a second React install:** `node versions` mismatch between
    `react` and `react-dom`, or a nested copy.
 
    ```bash
@@ -130,7 +146,7 @@ Expect exactly one `node_modules/react/cjs/react.production.js`, in one chunk.
    find node_modules -maxdepth 4 -type d \( -name react -o -name react-dom \) -path "*/node_modules/*"
    ```
 
-3. **Check React is still landing in one shared chunk.** Both the popup and the
+4. **Check React is still landing in one shared chunk.** Both the popup and the
    sidepanel mount their own root, so each HTML entry must import the *same*
    React chunk:
 
