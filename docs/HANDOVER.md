@@ -103,10 +103,23 @@ Roughly in the order worth caring about.
 4. **`extension/src/sidepanel/` is leftover CRXJS scaffold** — an empty App with
    the React logo. The manifest declares it, so it loads React for nothing.
    Safe to delete along with the `side_panel` entry.
-5. **The repo is not Biome-clean** — about 130 pre-existing complaints, mostly
-   CRLF versus LF. Worth one commit that touches nothing but formatting.
-   Until then, never run `biome check --write` on a directory: it reformats
-   neighbouring files and buries the real diff.
+
+   It is now formatted and null-checked like the rest of the project, which is
+   wasted polish on dead code — a reason to decide about it rather than leave it.
+### Biome — done, 2026-10-09
+
+`biome check` and `biome ci` both exit 0. The 121 complaints were mostly a
+line-ending argument: `core.autocrlf` checked files out as CRLF while the
+repository stored LF, and Biome formats to LF, so every file looked misformatted
+and fixing it in the working tree was undone by the next checkout. A
+`.gitattributes` with `* text=auto eol=lf` settles it on every platform.
+
+Only the 13 `noChildrenProp` infos remain, and they are accepted in
+`biome.json` — passing `children` as a prop is how TanStack Form is used here.
+
+One habit worth keeping: run `biome check --write` on specific files, not on a
+directory, unless the commit is meant to be formatting-only. On a directory it
+reformats neighbours and buries the real diff.
 
 ### The validation item — closed, not forgotten
 
