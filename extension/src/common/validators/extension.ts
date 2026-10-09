@@ -18,7 +18,9 @@ export const getExtensionMessageSchema = <T extends ZodType>(schema: T) =>
 		}),
 	]);
 
-export const getExtensionMessageResponseSchema = <T extends ZodType>(schema: T) =>
+export const getExtensionMessageResponseSchema = <T extends ZodType>(
+	schema: T,
+) =>
 	discriminatedUnion("ok", [
 		object({ ok: literal(true), state: getExtensionStateSchema(schema) }),
 		object({ ok: literal(false), error: string() }),

@@ -12,7 +12,10 @@ const tiers: ISliderSettings[] = [
 describe("useSliderSettings", () => {
 	it("тръгва от подадения initialSliderSettings", () => {
 		const { result } = renderHook(() =>
-			useSliderSettings({ allSettings: tiers, initialSliderSettings: tiers[1] }),
+			useSliderSettings({
+				allSettings: tiers,
+				initialSliderSettings: tiers[1],
+			}),
 		);
 
 		expect(result.current.lootSliderSettings).toEqual(tiers[1]);

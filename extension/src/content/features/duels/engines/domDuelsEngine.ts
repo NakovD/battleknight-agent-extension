@@ -21,9 +21,8 @@ export class DomDuelsEngine implements IDuelsEngine {
 
 		console.log("[DomDuelsEngine] page:", page, {
 			pathname: window.location.pathname,
-			offsetSelectValue: document.querySelector<HTMLSelectElement>(
-				"#highscoreOffset",
-			)?.value,
+			offsetSelectValue:
+				document.querySelector<HTMLSelectElement>("#highscoreOffset")?.value,
 			rankingOffset: settings.rankingOffset,
 		});
 
@@ -230,7 +229,8 @@ function scrapeKnights(): ScrapedKnight[] {
 }
 
 const parseNumericCell = (row: HTMLElement, selector: string) => {
-	const text = row.querySelector<HTMLElement>(selector)?.textContent?.trim() ?? "0";
+	const text =
+		row.querySelector<HTMLElement>(selector)?.textContent?.trim() ?? "0";
 
 	// Thousand separators and any stray markup around the number.
 	return parseInt(text.replace(/\D/g, ""), 10) || 0;

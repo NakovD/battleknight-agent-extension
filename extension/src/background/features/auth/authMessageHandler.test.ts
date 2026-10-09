@@ -29,7 +29,10 @@ describe("createAuthMessageHandler", () => {
 
 	it("AUTH_LOGIN вика login и връща акаунта", async () => {
 		auth.login.mockResolvedValue(signedIn);
-		const payload = { email: "knight@example.com", password: "super-secret-passphrase" };
+		const payload = {
+			email: "knight@example.com",
+			password: "super-secret-passphrase",
+		};
 
 		const reply = await handle({ type: "AUTH_LOGIN", payload });
 
@@ -42,7 +45,10 @@ describe("createAuthMessageHandler", () => {
 
 		await handle({
 			type: "AUTH_REGISTER",
-			payload: { email: "knight@example.com", password: "super-secret-passphrase" },
+			payload: {
+				email: "knight@example.com",
+				password: "super-secret-passphrase",
+			},
 		});
 
 		expect(auth.register).toHaveBeenCalledOnce();
@@ -63,7 +69,9 @@ describe("createAuthMessageHandler", () => {
 	});
 
 	it("предава съобщението на AuthApiError към popup-а", async () => {
-		auth.login.mockRejectedValue(new AuthApiError("Invalid email or password."));
+		auth.login.mockRejectedValue(
+			new AuthApiError("Invalid email or password."),
+		);
 
 		const reply = await handle({
 			type: "AUTH_LOGIN",
@@ -74,12 +82,17 @@ describe("createAuthMessageHandler", () => {
 	});
 
 	it("скрива детайлите на неочаквани грешки", async () => {
-		const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => {});
 		auth.login.mockRejectedValue(new Error("internal detail"));
 
 		const reply = await handle({
 			type: "AUTH_LOGIN",
-			payload: { email: "knight@example.com", password: "super-secret-passphrase" },
+			payload: {
+				email: "knight@example.com",
+				password: "super-secret-passphrase",
+			},
 		});
 
 		expect(reply).toEqual({

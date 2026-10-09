@@ -15,7 +15,9 @@ export interface IDuelsExtensionController {
 	 * Записва частична промяна в състоянието (напр. от content script-а
 	 * след изпълнена стъпка — нова атака, грешка и т.н.)
 	 */
-	updateStatus(patch: Partial<DuelsExtensionState>): Promise<DuelsExtensionState>;
+	updateStatus(
+		patch: Partial<DuelsExtensionState>,
+	): Promise<DuelsExtensionState>;
 
 	/**
 	 * Регистрира handler, който се вика при всяка промяна на състоянието.

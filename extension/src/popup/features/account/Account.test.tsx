@@ -21,12 +21,18 @@ const fillAndSubmit = (
 	password: string,
 	submitLabel: string,
 ) => {
-	fireEvent.change(container.querySelector('input[name="email"]') as HTMLElement, {
-		target: { value: email },
-	});
-	fireEvent.change(container.querySelector('input[name="password"]') as HTMLElement, {
-		target: { value: password },
-	});
+	fireEvent.change(
+		container.querySelector('input[name="email"]') as HTMLElement,
+		{
+			target: { value: email },
+		},
+	);
+	fireEvent.change(
+		container.querySelector('input[name="password"]') as HTMLElement,
+		{
+			target: { value: password },
+		},
+	);
 	fireEvent.click(screen.getByRole("button", { name: submitLabel }));
 };
 
@@ -40,7 +46,9 @@ describe("Account", () => {
 
 		render(<Account />);
 
-		expect(await screen.findByRole("button", { name: "Sign in" })).toBeInTheDocument();
+		expect(
+			await screen.findByRole("button", { name: "Sign in" }),
+		).toBeInTheDocument();
 		expect(send).toHaveBeenCalledWith({ type: "AUTH_GET_ACCOUNT" });
 	});
 
@@ -60,19 +68,30 @@ describe("Account", () => {
 		const { container } = render(<Account />);
 		await screen.findByRole("button", { name: "Sign in" });
 
-		fillAndSubmit(container, "knight@example.com", "super-secret-passphrase", "Sign in");
+		fillAndSubmit(
+			container,
+			"knight@example.com",
+			"super-secret-passphrase",
+			"Sign in",
+		);
 
 		expect(await screen.findByText("knight@example.com")).toBeInTheDocument();
 		expect(send).toHaveBeenLastCalledWith({
 			type: "AUTH_LOGIN",
-			payload: { email: "knight@example.com", password: "super-secret-passphrase" },
+			payload: {
+				email: "knight@example.com",
+				password: "super-secret-passphrase",
+			},
 		});
 	});
 
 	it("показва грешката от сървъра и остава на формата", async () => {
 		send
 			.mockResolvedValueOnce({ ok: true, account: { status: "signedOut" } })
-			.mockResolvedValueOnce({ ok: false, error: "Invalid email or password." });
+			.mockResolvedValueOnce({
+				ok: false,
+				error: "Invalid email or password.",
+			});
 		const { container } = render(<Account />);
 		await screen.findByRole("button", { name: "Sign in" });
 
@@ -108,12 +127,20 @@ describe("Account", () => {
 			await screen.findByRole("button", { name: "No account yet? Create one" }),
 		);
 
-		fillAndSubmit(container, "knight@example.com", "super-secret-passphrase", "Create account");
+		fillAndSubmit(
+			container,
+			"knight@example.com",
+			"super-secret-passphrase",
+			"Create account",
+		);
 
 		await screen.findByText("knight@example.com");
 		expect(send).toHaveBeenLastCalledWith({
 			type: "AUTH_REGISTER",
-			payload: { email: "knight@example.com", password: "super-secret-passphrase" },
+			payload: {
+				email: "knight@example.com",
+				password: "super-secret-passphrase",
+			},
 		});
 	});
 
@@ -125,12 +152,16 @@ describe("Account", () => {
 
 		fireEvent.click(await screen.findByRole("button", { name: "Log out" }));
 
-		expect(await screen.findByRole("button", { name: "Sign in" })).toBeInTheDocument();
+		expect(
+			await screen.findByRole("button", { name: "Sign in" }),
+		).toBeInTheDocument();
 		expect(send).toHaveBeenLastCalledWith({ type: "AUTH_LOGOUT" });
 	});
 
 	it("показва съобщение, ако background-ът не отговаря", async () => {
-		send.mockRejectedValue("Could not establish connection. Receiving end does not exist.");
+		send.mockRejectedValue(
+			"Could not establish connection. Receiving end does not exist.",
+		);
 
 		render(<Account />);
 

@@ -44,7 +44,9 @@ export class FetchDuelsSettingsApiClient implements IDuelsSettingsApiClient {
 		body?: DuelsSettings,
 	): Promise<Response> {
 		if (!this.baseUrl) {
-			throw new ApiError("The API address is not configured (VITE_API_BASE_URL).");
+			throw new ApiError(
+				"The API address is not configured (VITE_API_BASE_URL).",
+			);
 		}
 
 		try {

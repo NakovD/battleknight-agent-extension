@@ -73,7 +73,9 @@ describe("Duels", () => {
 
 		render(<Duels />);
 
-		expect(await screen.findByRole("button", { name: "Start extension" })).toBeEnabled();
+		expect(
+			await screen.findByRole("button", { name: "Start extension" }),
+		).toBeEnabled();
 	});
 
 	it("записва настройките в акаунта и стартира агента", async () => {
@@ -82,7 +84,9 @@ describe("Duels", () => {
 			.mockResolvedValueOnce({ ok: true, settings: savedSettings });
 
 		render(<Duels />);
-		fireEvent.click(await screen.findByRole("button", { name: "Start extension" }));
+		fireEvent.click(
+			await screen.findByRole("button", { name: "Start extension" }),
+		);
 
 		await waitFor(() =>
 			expect(settingsSend).toHaveBeenLastCalledWith({
@@ -114,7 +118,9 @@ describe("Duels", () => {
 			"None of the 100 knights on this ranking page matched your filters.",
 		);
 		// Обяснението стои над формата, не вместо нея.
-		expect(screen.getByRole("button", { name: "Start extension" })).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "Start extension" }),
+		).toBeInTheDocument();
 	});
 
 	it("показва предупреждение, ако зареждането от акаунта се провали, но формата работи", async () => {
@@ -128,7 +134,9 @@ describe("Duels", () => {
 		expect(await screen.findByRole("alert")).toHaveTextContent(
 			"Could not reach the server. Please try again later.",
 		);
-		expect(screen.getByRole("button", { name: "Start extension" })).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "Start extension" }),
+		).toBeInTheDocument();
 	});
 
 	it("стартира агента дори ако записът в акаунта се провали", async () => {
@@ -151,7 +159,9 @@ describe("Duels", () => {
 		);
 
 		render(<Duels />);
-		fireEvent.click(await screen.findByRole("button", { name: "Start extension" }));
+		fireEvent.click(
+			await screen.findByRole("button", { name: "Start extension" }),
+		);
 
 		expect(await screen.findByText("Extension is running")).toBeInTheDocument();
 		expect(await screen.findByRole("alert")).toHaveTextContent(

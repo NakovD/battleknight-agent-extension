@@ -92,12 +92,20 @@ describe("extensionMessenger.listen", () => {
 
 		chromeRuntime.dispatchMessage({
 			type: "STATUS_UPDATE",
-			payload: { status: "running", errorMessage: null, settings: validSettings },
+			payload: {
+				status: "running",
+				errorMessage: null,
+				settings: validSettings,
+			},
 		});
 
 		expect(handler).toHaveBeenCalledWith({
 			type: "STATUS_UPDATE",
-			payload: { status: "running", errorMessage: null, settings: validSettings },
+			payload: {
+				status: "running",
+				errorMessage: null,
+				settings: validSettings,
+			},
 		});
 	});
 

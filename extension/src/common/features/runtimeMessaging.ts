@@ -1,4 +1,4 @@
-import type { ZodType, infer as ZodInfer } from "zod";
+import type { infer as ZodInfer, ZodType } from "zod";
 
 /**
  * Sends a message to the extension's other contexts and validates the reply.

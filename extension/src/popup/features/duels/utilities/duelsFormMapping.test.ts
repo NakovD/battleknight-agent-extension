@@ -38,10 +38,14 @@ describe("duels form mapping", () => {
 	});
 
 	it("закръгля cooldown до цели минути", () => {
-		expect(mapSettingsToForm({ ...settings, cooldownMs: 90_000 }).cooldownMinutes).toBe(2);
+		expect(
+			mapSettingsToForm({ ...settings, cooldownMs: 90_000 }).cooldownMinutes,
+		).toBe(2);
 	});
 
 	it("вдига cooldown под минута до една, защото формата иска поне толкова", () => {
-		expect(mapSettingsToForm({ ...settings, cooldownMs: 0 }).cooldownMinutes).toBe(1);
+		expect(
+			mapSettingsToForm({ ...settings, cooldownMs: 0 }).cooldownMinutes,
+		).toBe(1);
 	});
 });

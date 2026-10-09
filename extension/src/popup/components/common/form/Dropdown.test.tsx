@@ -46,10 +46,17 @@ describe("Dropdown", () => {
 	it("извиква onBlur при загуба на фокус извън dropdown-а", () => {
 		const onBlur = vi.fn();
 		render(
-			<Dropdown options={options} value={null} onChange={vi.fn()} onBlur={onBlur} />,
+			<Dropdown
+				options={options}
+				value={null}
+				onChange={vi.fn()}
+				onBlur={onBlur}
+			/>,
 		);
 
-		const details = screen.getByText("Pick...").closest("details") as HTMLElement;
+		const details = screen
+			.getByText("Pick...")
+			.closest("details") as HTMLElement;
 		fireEvent.blur(details);
 
 		expect(onBlur).toHaveBeenCalled();
@@ -58,7 +65,11 @@ describe("Dropdown", () => {
 	it("рендира всички подадени опции", () => {
 		render(<Dropdown options={options} value={null} onChange={vi.fn()} />);
 
-		expect(screen.getByRole("button", { name: "Option A" })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Option B" })).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "Option A" }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "Option B" }),
+		).toBeInTheDocument();
 	});
 });

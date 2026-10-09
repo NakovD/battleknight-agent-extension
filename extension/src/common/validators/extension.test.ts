@@ -114,7 +114,11 @@ describe("getExtensionMessageSchema", () => {
 	it("приема STATUS_UPDATE и пази settings в payload-а", () => {
 		const result = schema.safeParse({
 			type: "STATUS_UPDATE",
-			payload: { status: "running", errorMessage: null, settings: validSettings },
+			payload: {
+				status: "running",
+				errorMessage: null,
+				settings: validSettings,
+			},
 		});
 
 		expect(result.success).toBe(true);

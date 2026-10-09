@@ -6,15 +6,15 @@ const [first, second, third] = duelsLevelSliderSettings;
 
 describe("findSliderSettingsForValue", () => {
 	it("връща степента, в чийто обхват попада стойността", () => {
-		expect(findSliderSettingsForValue(duelsLevelSliderSettings, 800, first)).toEqual(
-			third,
-		);
+		expect(
+			findSliderSettingsForValue(duelsLevelSliderSettings, 800, first),
+		).toEqual(third);
 	});
 
 	it("работи и по границите на обхвата", () => {
-		expect(findSliderSettingsForValue(duelsLevelSliderSettings, 50, third)).toEqual(
-			first,
-		);
+		expect(
+			findSliderSettingsForValue(duelsLevelSliderSettings, 50, third),
+		).toEqual(first);
 	});
 
 	it("връща подадената степен по подразбиране без стойност", () => {

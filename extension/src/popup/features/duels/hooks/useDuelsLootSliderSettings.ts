@@ -19,5 +19,6 @@ export const useDuelsLootSliderSettings = ({
 			initialValue,
 			duelsLootSliderSettings[2],
 		),
-		onSettingsChange: (newSettings) => handleLootValueChange(newSettings.max / 2),
+		onSettingsChange: (newSettings) =>
+			handleLootValueChange(newSettings.max / 2),
 	});

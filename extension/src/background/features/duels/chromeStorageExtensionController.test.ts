@@ -124,7 +124,11 @@ describe("ChromeStorageAgentController", () => {
 		const handler = vi.fn();
 		controller.onStatusChange(handler);
 
-		chromeStorage.dispatchChange(DUELS_STORAGE_KEY, { status: "running" }, "sync");
+		chromeStorage.dispatchChange(
+			DUELS_STORAGE_KEY,
+			{ status: "running" },
+			"sync",
+		);
 
 		expect(handler).not.toHaveBeenCalled();
 	});

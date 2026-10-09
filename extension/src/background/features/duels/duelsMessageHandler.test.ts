@@ -29,7 +29,9 @@ describe("createDuelsMessageHandler", () => {
 		const handle = createDuelsMessageHandler(createController());
 
 		expect(handle({ type: "AUTH_LOGIN" })).toBeNull();
-		expect(handle({ type: "START_AGENT", payload: { levelMin: -1 } })).toBeNull();
+		expect(
+			handle({ type: "START_AGENT", payload: { levelMin: -1 } }),
+		).toBeNull();
 	});
 
 	it("START_AGENT стартира агента и връща състоянието", async () => {
@@ -48,7 +50,9 @@ describe("createDuelsMessageHandler", () => {
 		const controller = createController();
 		controller.stop.mockRejectedValue(new Error("storage unavailable"));
 
-		const reply = await createDuelsMessageHandler(controller)({ type: "STOP_AGENT" });
+		const reply = await createDuelsMessageHandler(controller)({
+			type: "STOP_AGENT",
+		});
 
 		expect(reply).toEqual({ ok: false, error: "storage unavailable" });
 	});

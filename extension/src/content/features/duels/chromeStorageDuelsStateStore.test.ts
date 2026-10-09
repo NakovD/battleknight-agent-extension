@@ -55,7 +55,10 @@ describe("ChromeStorageDuelsStateStore", () => {
 		chromeStorage.store[DUELS_STORAGE_KEY] = runningState;
 		expect(await store.isRunning()).toBe(true);
 
-		chromeStorage.store[DUELS_STORAGE_KEY] = { ...runningState, status: "idle" };
+		chromeStorage.store[DUELS_STORAGE_KEY] = {
+			...runningState,
+			status: "idle",
+		};
 		expect(await store.isRunning()).toBe(false);
 	});
 
@@ -74,7 +77,9 @@ describe("ChromeStorageDuelsStateStore", () => {
 
 		await store.reportProgress({ attacksToday: 5, currentEnemyName: "Enemy" });
 
-		const stored = chromeStorage.store[DUELS_STORAGE_KEY] as DuelsExtensionState;
+		const stored = chromeStorage.store[
+			DUELS_STORAGE_KEY
+		] as DuelsExtensionState;
 		expect(stored.attacksToday).toBe(5);
 		expect(stored.currentEnemyName).toBe("Enemy");
 		// Останалите полета остават непроменени
@@ -85,7 +90,9 @@ describe("ChromeStorageDuelsStateStore", () => {
 	it("reportProgress върху празен storage тръгва от началното състояние", async () => {
 		await store.reportProgress({ attacksToday: 1 });
 
-		const stored = chromeStorage.store[DUELS_STORAGE_KEY] as DuelsExtensionState;
+		const stored = chromeStorage.store[
+			DUELS_STORAGE_KEY
+		] as DuelsExtensionState;
 		expect(stored.attacksToday).toBe(1);
 		expect(stored.status).toBe("idle");
 	});

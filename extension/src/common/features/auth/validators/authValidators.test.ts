@@ -17,18 +17,25 @@ describe("authValidators", () => {
 
 	it("отхвърля невалиден email", () => {
 		expect(
-			loginCredentialsValidator.safeParse({ email: "not-an-email", password: "x" }).success,
+			loginCredentialsValidator.safeParse({
+				email: "not-an-email",
+				password: "x",
+			}).success,
 		).toBe(false);
 	});
 
 	it("при вход изисква само непразна парола", () => {
 		expect(
-			loginCredentialsValidator.safeParse({ email: "knight@example.com", password: "x" })
-				.success,
+			loginCredentialsValidator.safeParse({
+				email: "knight@example.com",
+				password: "x",
+			}).success,
 		).toBe(true);
 		expect(
-			loginCredentialsValidator.safeParse({ email: "knight@example.com", password: "" })
-				.success,
+			loginCredentialsValidator.safeParse({
+				email: "knight@example.com",
+				password: "",
+			}).success,
 		).toBe(false);
 	});
 
@@ -57,7 +64,11 @@ describe("authValidators", () => {
 	});
 
 	it("разпознава auth съобщенията", () => {
-		expect(authMessageValidator.safeParse({ type: "AUTH_LOGOUT" }).success).toBe(true);
-		expect(authMessageValidator.safeParse({ type: "GET_STATUS" }).success).toBe(false);
+		expect(
+			authMessageValidator.safeParse({ type: "AUTH_LOGOUT" }).success,
+		).toBe(true);
+		expect(authMessageValidator.safeParse({ type: "GET_STATUS" }).success).toBe(
+			false,
+		);
 	});
 });

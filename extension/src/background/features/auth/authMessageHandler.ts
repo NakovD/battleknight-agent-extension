@@ -14,7 +14,9 @@ const isAuthMessage = (raw: unknown) =>
 	raw.type.startsWith("AUTH_");
 
 export const createAuthMessageHandler =
-	(auth: Pick<AuthService, "register" | "login" | "logout" | "getAccount">): MessageHandler =>
+	(
+		auth: Pick<AuthService, "register" | "login" | "logout" | "getAccount">,
+	): MessageHandler =>
 	(raw) => {
 		if (!isAuthMessage(raw)) {
 			return null;

@@ -1,0 +1,12 @@
+# Keep the working tree LF on every platform.
+#
+# Without this, core.autocrlf=true checks these files out with CRLF on Windows
+# while the repository stores LF, and Biome — which formats to LF — reports
+# every file as misformatted. Fixing that in the working tree achieved nothing,
+# because the next checkout converted it straight back.
+* text=auto eol=lf
+
+*.png binary
+*.ico binary
+*.zip binary
+*.db binary

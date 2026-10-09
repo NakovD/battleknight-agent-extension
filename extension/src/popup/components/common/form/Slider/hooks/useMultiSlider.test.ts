@@ -5,8 +5,7 @@ import { useMultiSlider } from "./useMultiSlider";
 /** Track с ширина 200px, започващ от x=0 — offsetX == clientX за тестовете. */
 function attachTrackRef(bgRef: { current: HTMLElement | null }) {
 	const el = document.createElement("div");
-	el.getBoundingClientRect = () =>
-		({ left: 0, width: 200 }) as DOMRect;
+	el.getBoundingClientRect = () => ({ left: 0, width: 200 }) as DOMRect;
 	bgRef.current = el;
 }
 

@@ -7,7 +7,9 @@ import {
 } from "@/common/features/duels/validators/duelsSettingsMessageValidators";
 
 export const createDuelsSettingsMessageHandler =
-	(settings: Pick<RemoteDuelsSettingsService, "load" | "save">): MessageHandler =>
+	(
+		settings: Pick<RemoteDuelsSettingsService, "load" | "save">,
+	): MessageHandler =>
 	(raw) => {
 		const parsed = settingsMessageValidator.safeParse(raw);
 

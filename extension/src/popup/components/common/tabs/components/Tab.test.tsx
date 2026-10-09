@@ -5,9 +5,7 @@ import { Tab } from "./Tab";
 describe("Tab", () => {
 	it("извиква onClick при клик", () => {
 		const onClick = vi.fn();
-		render(
-			<Tab id="duels" isActive={false} label="Duels" onClick={onClick} />,
-		);
+		render(<Tab id="duels" isActive={false} label="Duels" onClick={onClick} />);
 
 		fireEvent.click(screen.getByRole("tab"));
 

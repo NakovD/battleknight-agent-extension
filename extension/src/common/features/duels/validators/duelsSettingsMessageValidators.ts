@@ -1,4 +1,10 @@
-import { discriminatedUnion, literal, object, string, type infer as ZodInfer } from "zod";
+import {
+	discriminatedUnion,
+	literal,
+	object,
+	string,
+	type infer as ZodInfer,
+} from "zod";
 import { duelsSettingsValidator } from "@/common/features/duels/validators/duelsSettingsValidator";
 
 export const settingsMessageValidator = discriminatedUnion("type", [

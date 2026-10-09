@@ -31,7 +31,8 @@ export const mapSettingsToForm = (settings: DuelsSettings): DuelsForm => ({
 	levels: [settings.levelMin, settings.levelMax],
 	page:
 		duelsFormPagesOptions.find(
-			(option) => Number(option.value) * RANKING_PAGE_SIZE === settings.rankingOffset,
+			(option) =>
+				Number(option.value) * RANKING_PAGE_SIZE === settings.rankingOffset,
 		) ?? duelsFormDefaultValues.page,
 	// The form's slider is in whole minutes and requires at least one, while the
 	// API accepts any non-negative number of milliseconds.

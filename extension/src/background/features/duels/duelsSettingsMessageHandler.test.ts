@@ -25,7 +25,9 @@ describe("createDuelsSettingsMessageHandler", () => {
 	it("връща null за чужди съобщения", () => {
 		expect(handle({ type: "AUTH_LOGIN" })).toBeNull();
 		expect(handle({ type: "START_AGENT", payload: settings })).toBeNull();
-		expect(handle({ type: "SETTINGS_SAVE", payload: { levelMin: -1 } })).toBeNull();
+		expect(
+			handle({ type: "SETTINGS_SAVE", payload: { levelMin: -1 } }),
+		).toBeNull();
 	});
 
 	it("SETTINGS_LOAD връща настройките от услугата", async () => {
@@ -65,7 +67,9 @@ describe("createDuelsSettingsMessageHandler", () => {
 	});
 
 	it("скрива детайлите на неочаквани грешки", async () => {
-		const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => {});
 		service.load.mockRejectedValue(new Error("internal detail"));
 
 		expect(await handle({ type: "SETTINGS_LOAD" })).toEqual({

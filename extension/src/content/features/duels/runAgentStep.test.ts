@@ -14,9 +14,11 @@ const mockEngine = {
 };
 
 vi.mock("@/content/features/duels/chromeStorageDuelsStateStore", () => ({
-	ChromeStorageDuelsStateStore: vi.fn(function ChromeStorageDuelsStateStoreMock() {
-		return mockStore;
-	}),
+	ChromeStorageDuelsStateStore: vi.fn(
+		function ChromeStorageDuelsStateStoreMock() {
+			return mockStore;
+		},
+	),
 }));
 
 vi.mock("@/content/features/duels/factory/duelsEngineFactory", () => ({
@@ -66,7 +68,9 @@ describe("runAgentStep — circuit breaker", () => {
 	});
 
 	it("увеличава consecutiveNavigations при navigated резултат", async () => {
-		mockStore.getState.mockResolvedValue(buildState({ consecutiveNavigations: 2 }));
+		mockStore.getState.mockResolvedValue(
+			buildState({ consecutiveNavigations: 2 }),
+		);
 		mockEngine.runStep.mockResolvedValue({ action: "navigated" });
 
 		await runAgentStep();
@@ -77,7 +81,9 @@ describe("runAgentStep — circuit breaker", () => {
 	});
 
 	it("спира агента с грешка след MAX_CONSECUTIVE_NAVIGATIONS последователни навигации", async () => {
-		mockStore.getState.mockResolvedValue(buildState({ consecutiveNavigations: 7 }));
+		mockStore.getState.mockResolvedValue(
+			buildState({ consecutiveNavigations: 7 }),
+		);
 		mockEngine.runStep.mockResolvedValue({ action: "navigated" });
 
 		await runAgentStep();
@@ -91,7 +97,9 @@ describe("runAgentStep — circuit breaker", () => {
 	});
 
 	it("нулира consecutiveNavigations при успешна атака", async () => {
-		mockStore.getState.mockResolvedValue(buildState({ consecutiveNavigations: 5 }));
+		mockStore.getState.mockResolvedValue(
+			buildState({ consecutiveNavigations: 5 }),
+		);
 		mockEngine.runStep.mockResolvedValue({
 			action: "attacked",
 			won: true,
@@ -106,7 +114,9 @@ describe("runAgentStep — circuit breaker", () => {
 	});
 
 	it("нулира consecutiveNavigations при done (няма валидна цел)", async () => {
-		mockStore.getState.mockResolvedValue(buildState({ consecutiveNavigations: 5 }));
+		mockStore.getState.mockResolvedValue(
+			buildState({ consecutiveNavigations: 5 }),
+		);
 		mockEngine.runStep.mockResolvedValue({ action: "done" });
 
 		await runAgentStep();
@@ -120,7 +130,8 @@ describe("runAgentStep — circuit breaker", () => {
 		mockStore.getState.mockResolvedValue(buildState());
 		mockEngine.runStep.mockResolvedValue({
 			action: "done",
-			reason: "None of the 100 knights on this ranking page matched your filters.",
+			reason:
+				"None of the 100 knights on this ranking page matched your filters.",
 		});
 
 		await runAgentStep();
@@ -177,11 +188,15 @@ describe("runAgentStep — circuit breaker", () => {
 		const patch = mockStore.reportProgress.mock.calls[0][0];
 		expect(patch.refusedEnemyIds).toEqual(["3793"]);
 		expect(patch.currentEnemyId).toBeNull();
-		expect(patch.errorMessage).toBe("The game refused the duel with Some Knight.");
+		expect(patch.errorMessage).toBe(
+			"The game refused the duel with Some Knight.",
+		);
 	});
 
 	it("отказът не добавя изчакване, за да се мине веднага на следващия рицар", async () => {
-		mockStore.getState.mockResolvedValue(buildState({ currentEnemyId: "3793" }));
+		mockStore.getState.mockResolvedValue(
+			buildState({ currentEnemyId: "3793" }),
+		);
 		mockEngine.runStep.mockResolvedValue({ action: "refused" });
 
 		await runAgentStep();
@@ -229,12 +244,16 @@ describe("runAgentStep — circuit breaker", () => {
 
 		const { refusedEnemyIds } = mockStore.reportProgress.mock.calls[0][0];
 		expect(refusedEnemyIds).toHaveLength(20);
-		expect(refusedEnemyIds.filter((id: string) => id === "id-3")).toHaveLength(1);
+		expect(refusedEnemyIds.filter((id: string) => id === "id-3")).toHaveLength(
+			1,
+		);
 		expect(refusedEnemyIds.at(-1)).toBe("id-3");
 	});
 
 	it("подава отказаните рицари на engine-а", async () => {
-		mockStore.getState.mockResolvedValue(buildState({ refusedEnemyIds: ["7"] }));
+		mockStore.getState.mockResolvedValue(
+			buildState({ refusedEnemyIds: ["7"] }),
+		);
 		mockEngine.runStep.mockResolvedValue({ action: "done" });
 
 		await runAgentStep();

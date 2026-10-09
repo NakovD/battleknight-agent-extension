@@ -21,7 +21,10 @@ export function installChromeStorageMock() {
 		storage: {
 			local: {
 				get: vi.fn(
-					(key: string, callback: (result: Record<string, unknown>) => void) => {
+					(
+						key: string,
+						callback: (result: Record<string, unknown>) => void,
+					) => {
 						callback(key in store ? { [key]: store[key] } : {});
 					},
 				),

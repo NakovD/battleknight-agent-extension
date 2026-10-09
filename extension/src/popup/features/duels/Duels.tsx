@@ -41,7 +41,9 @@ export const Duels = () => {
 	// The form reads its starting values once, so it must not render before the
 	// account's saved settings have been fetched.
 	if (!areSettingsLoaded) {
-		return <p className="p-4 text-[11px] text-stone-500">Loading settings...</p>;
+		return (
+			<p className="p-4 text-[11px] text-stone-500">Loading settings...</p>
+		);
 	}
 
 	return (
