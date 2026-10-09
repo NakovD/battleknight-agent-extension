@@ -49,7 +49,9 @@ export function installChromeRuntimeMock() {
 			lastErrorMessage = message;
 		},
 		dispatchMessage: (raw: unknown) => {
-			messageListeners.forEach((listener) => listener(raw));
+			messageListeners.forEach((listener) => {
+				listener(raw);
+			});
 		},
 		listenerCount: () => messageListeners.size,
 	};

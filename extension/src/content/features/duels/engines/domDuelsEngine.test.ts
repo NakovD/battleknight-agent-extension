@@ -79,8 +79,20 @@ function buildRankingDOM(
     </table>
   `;
 
-	const select = document.querySelector<HTMLSelectElement>("#highscoreOffset")!;
-	select.value = offset;
+	offsetSelect().value = offset;
+}
+
+/** The offset dropdown the ranking fixture renders; throws if the fixture changed. */
+function offsetSelect(): HTMLSelectElement {
+	const select = document.querySelector<HTMLSelectElement>("#highscoreOffset");
+
+	if (!select) {
+		throw new Error(
+			"The ranking fixture is missing its #highscoreOffset select.",
+		);
+	}
+
+	return select;
 }
 
 function buildDuelResultDOM(winnerName: string) {
@@ -182,8 +194,7 @@ describe("DomDuelsEngine", () => {
 			setPathname("/highscore/");
 			buildRankingDOM("100", []); // грешен offset
 
-			const select =
-				document.querySelector<HTMLSelectElement>("#highscoreOffset")!;
+			const select = offsetSelect();
 			const changeHandler = vi.fn();
 			select.addEventListener("change", changeHandler);
 
