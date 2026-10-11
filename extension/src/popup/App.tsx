@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Tabs } from "@/popup/components/common/tabs/Tabs";
 import { Account } from "@/popup/features/account/Account";
 import { Duels } from "@/popup/features/duels/Duels";
+import { Missions } from "@/popup/features/missions/Missions";
 
 export default function App() {
 	const [activeTab, setActiveTab] = useState("duels");
@@ -37,7 +38,7 @@ export default function App() {
 					<Duels />
 				</Tabs.Panel>
 				<Tabs.Panel activeTab={activeTab} id="missions">
-					su
+					<Missions />
 				</Tabs.Panel>
 				<Tabs.Panel activeTab={activeTab} id="account">
 					<Account />
