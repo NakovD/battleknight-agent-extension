@@ -14,7 +14,6 @@ export const MissionsSizeStep = withMissionsForm({
 						<OptionButton
 							key={option.value}
 							label={option.label}
-							hint={`${option.defaultCooldownMinutes} min`}
 							isSelected={field.state.value === option.value}
 							onClick={() => {
 								field.handleChange(option.value);
