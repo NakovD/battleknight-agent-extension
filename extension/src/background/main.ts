@@ -7,6 +7,8 @@ import { createDuelsMessageHandler } from "@/background/features/duels/duelsMess
 import { createDuelsSettingsMessageHandler } from "@/background/features/duels/duelsSettingsMessageHandler";
 import { FetchDuelsSettingsApiClient } from "@/background/features/duels/fetchDuelsSettingsApiClient";
 import { RemoteDuelsSettingsService } from "@/background/features/duels/remoteDuelsSettingsService";
+import { GameTabWorldMapReader } from "@/background/features/missions/gameTabWorldMapReader";
+import { createMissionsMessageHandler } from "@/background/features/missions/missionsMessageHandler";
 import type { MessageHandler } from "@/background/models/messageHandler";
 
 const controller = new ChromeStorageAgentController();
@@ -27,6 +29,7 @@ const messageHandlers: MessageHandler[] = [
 	createDuelsMessageHandler(controller),
 	createDuelsSettingsMessageHandler(remoteSettings),
 	createAuthMessageHandler(authService),
+	createMissionsMessageHandler(new GameTabWorldMapReader(), controller),
 ];
 
 chrome.runtime.onMessage.addListener((raw, _sender, sendResponse) => {

@@ -19,8 +19,8 @@ export const MissionsLocationStep = withMissionsForm({
 		return (
 			<div className="flex flex-col gap-4">
 				<p className="text-[11px] text-stone-500 leading-relaxed">
-					Reads the city your knight is in from the world map, along with the
-					locations you can do missions in.
+					Opens the world map in the game tab and reads the city your knight is
+					in, along with the locations you can do missions in.
 				</p>
 
 				<Button
@@ -45,6 +45,12 @@ export const MissionsLocationStep = withMissionsForm({
 				{locationsState.status === "unavailable" && (
 					<p role="alert" className="text-[11px] text-amber-500/80">
 						{missionsUnavailableMessages[locationsState.reason]}
+						{/* Names the wait when we have no message of our own for it. */}
+						{locationsState.reason === "busy" && locationsState.detail && (
+							<span className="block pt-1 text-stone-500">
+								The game says: {locationsState.detail}
+							</span>
+						)}
 					</p>
 				)}
 

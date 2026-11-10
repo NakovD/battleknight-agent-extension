@@ -1,6 +1,6 @@
 import { useState } from "react";
+import { missionsMessenger } from "@/common/features/missions/missionsMessenger";
 import type { MissionLocationsResult } from "@/common/features/missions/models/missionLocations";
-import { loadMissionLocations } from "@/popup/features/missions/data/missionLocationsLoader";
 
 export type MissionLocationsState =
 	| { status: "idle" }
@@ -16,7 +16,7 @@ export const useMissionLocations = () => {
 		setLocationsState({ status: "loading" });
 
 		try {
-			setLocationsState(await loadMissionLocations());
+			setLocationsState(await missionsMessenger.loadLocations());
 		} catch {
 			setLocationsState({ status: "unavailable", reason: "world-unreachable" });
 		}

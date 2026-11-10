@@ -1,13 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { loadMissionLocations } from "@/popup/features/missions/data/missionLocationsLoader";
+import { missionsMessenger } from "@/common/features/missions/missionsMessenger";
 import { Missions } from "./Missions";
 
-vi.mock("@/popup/features/missions/data/missionLocationsLoader", () => ({
-	loadMissionLocations: vi.fn(),
+vi.mock("@/common/features/missions/missionsMessenger", () => ({
+	missionsMessenger: { loadLocations: vi.fn() },
 }));
 
-const load = vi.mocked(loadMissionLocations);
+const load = vi.mocked(missionsMessenger.loadLocations);
 
 describe("Missions", () => {
 	beforeEach(() => {

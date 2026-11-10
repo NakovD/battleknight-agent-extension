@@ -89,6 +89,14 @@ describe("MissionsForm", () => {
 		expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
 	});
 
+	it("при непознато чакане показва текста на играта", () => {
+		renderForm({ status: "unavailable", reason: "busy", detail: "Работа" });
+
+		expect(screen.getByRole("alert")).toHaveTextContent(
+			"The game says: Работа",
+		);
+	});
+
 	it("повторното зареждане изчиства избраната локация", () => {
 		const { onLoadLocations } = renderForm();
 

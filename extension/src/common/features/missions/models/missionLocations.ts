@@ -1,21 +1,16 @@
-export interface MissionLocation {
-	id: string;
-	name: string;
-}
+import type { infer as ZodInfer } from "zod";
+import type {
+	missionLocationsResultValidator,
+	missionLocationValidator,
+	missionsUnavailableReasonValidator,
+} from "@/common/features/missions/validators/missionLocationsValidators";
 
-/**
- * Why the world map can't be read right now. In every one of these the knight
- * is busy or the page is out of reach, so the extension does nothing.
- */
-export type MissionsUnavailableReason =
-	| "traveling"
-	| "working"
-	| "no-health"
-	| "returning-from-mission"
-	| "returning-from-group-mission"
-	| "returning-from-duel"
-	| "world-unreachable";
+export type MissionLocation = ZodInfer<typeof missionLocationValidator>;
 
-export type MissionLocationsResult =
-	| { status: "loaded"; city: string; locations: MissionLocation[] }
-	| { status: "unavailable"; reason: MissionsUnavailableReason };
+export type MissionsUnavailableReason = ZodInfer<
+	typeof missionsUnavailableReasonValidator
+>;
+
+export type MissionLocationsResult = ZodInfer<
+	typeof missionLocationsResultValidator
+>;
