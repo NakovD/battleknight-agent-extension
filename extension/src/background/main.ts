@@ -7,12 +7,15 @@ import { createDuelsMessageHandler } from "@/background/features/duels/duelsMess
 import { createDuelsSettingsMessageHandler } from "@/background/features/duels/duelsSettingsMessageHandler";
 import { FetchDuelsSettingsApiClient } from "@/background/features/duels/fetchDuelsSettingsApiClient";
 import { RemoteDuelsSettingsService } from "@/background/features/duels/remoteDuelsSettingsService";
+import { ChromeStorageMissionsController } from "@/background/features/missions/chromeStorageMissionsController";
 import { GameTabWorldMapReader } from "@/background/features/missions/gameTabWorldMapReader";
+import { createMissionsAgentMessageHandler } from "@/background/features/missions/missionsAgentMessageHandler";
 import { createMissionsMessageHandler } from "@/background/features/missions/missionsMessageHandler";
 import type { MessageHandler } from "@/background/models/messageHandler";
 
 const controller = new ChromeStorageAgentController();
 const sessions = new ChromeStorageAuthSessionStore();
+const missionsController = new ChromeStorageMissionsController();
 
 const authService = new AuthService(
 	new FetchAuthApiClient(import.meta.env.VITE_API_BASE_URL),
@@ -26,10 +29,15 @@ const remoteSettings = new RemoteDuelsSettingsService(
 );
 
 const messageHandlers: MessageHandler[] = [
-	createDuelsMessageHandler(controller),
+	createDuelsMessageHandler(controller, async () =>
+		(await missionsController.getStatus()).status === "running"
+			? "The missions agent is running. Stop it first: both agents drive the same game tab."
+			: null,
+	),
 	createDuelsSettingsMessageHandler(remoteSettings),
 	createAuthMessageHandler(authService),
 	createMissionsMessageHandler(new GameTabWorldMapReader(), controller),
+	createMissionsAgentMessageHandler(missionsController, controller),
 ];
 
 chrome.runtime.onMessage.addListener((raw, _sender, sendResponse) => {
@@ -58,6 +66,13 @@ controller.onStatusChange((state) => {
 				settings: state.settings,
 			},
 		},
+		() => void chrome.runtime.lastError, // няма слушащ popup — игнорираме
+	);
+});
+
+missionsController.onStatusChange((state) => {
+	chrome.runtime.sendMessage(
+		{ type: "MISSIONS_STATUS_UPDATE", payload: state },
 		() => void chrome.runtime.lastError, // няма слушащ popup — игнорираме
 	);
 });

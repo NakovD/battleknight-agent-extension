@@ -8,8 +8,15 @@ type DuelsResponse = ExtensionMessageResponse<typeof duelsSettingsValidator>;
 
 const messageSchema = getExtensionMessageSchema(duelsSettingsValidator);
 
+/**
+ * isOtherAgentRunning guards Start: another agent driving the same game tab
+ * would fight this one over every navigation.
+ */
 export const createDuelsMessageHandler =
-	(controller: IDuelsExtensionController): MessageHandler =>
+	(
+		controller: IDuelsExtensionController,
+		isOtherAgentRunning: () => Promise<string | null> = async () => null,
+	): MessageHandler =>
 	(raw) => {
 		const parsed = messageSchema.safeParse(raw);
 
@@ -21,9 +28,13 @@ export const createDuelsMessageHandler =
 
 		const handle = async (): Promise<DuelsResponse> => {
 			switch (message.type) {
-				case "START_AGENT":
+				case "START_AGENT": {
+					const otherAgent = await isOtherAgentRunning();
+					if (otherAgent) return { ok: false, error: otherAgent };
+
 					await controller.start(message.payload);
 					return { ok: true, state: await controller.getStatus() };
+				}
 
 				case "STOP_AGENT":
 					await controller.stop();

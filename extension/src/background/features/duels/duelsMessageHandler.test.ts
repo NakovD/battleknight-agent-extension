@@ -46,6 +46,18 @@ describe("createDuelsMessageHandler", () => {
 		expect(reply).toEqual({ ok: true, state: DUELS_INITIAL_EXTENSION_STATE });
 	});
 
+	it("START_AGENT не стартира, докато друг агент работи", async () => {
+		const controller = createController();
+
+		const reply = await createDuelsMessageHandler(
+			controller,
+			async () => "Мисиите работят",
+		)({ type: "START_AGENT", payload: settings });
+
+		expect(controller.start).not.toHaveBeenCalled();
+		expect(reply).toEqual({ ok: false, error: "Мисиите работят" });
+	});
+
 	it("връща грешката, ако контролерът се провали", async () => {
 		const controller = createController();
 		controller.stop.mockRejectedValue(new Error("storage unavailable"));
