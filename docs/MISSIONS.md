@@ -1,7 +1,16 @@
 # Missions — how the game works and what we decided
 
-Working notes for the Missions agent. The popup and location loading are on
-`feature/missions-popup`. The agent itself is not built yet.
+Working notes for the Missions agent, on `feature/missions-popup`. The popup,
+location loading and the agent are built and unit tested against saved pages.
+*The agent has not yet been run in a live game.*
+
+Where the code is, under `extension/src`:
+
+- the agent's decisions: `content/features/missions/decideMissionStep.ts`;
+- carrying them out: `content/features/missions/runMissionStep.ts`;
+- reading the game's pages: `content/features/missions/readMissionPages.ts`,
+  `missionMap.ts` and `readWorldPage.ts`;
+- state shared by background and content: `common/features/missions/missionsStateStorage.ts`.
 
 ---
 

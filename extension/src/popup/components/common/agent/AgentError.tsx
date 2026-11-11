@@ -1,13 +1,13 @@
 import { ArrowLeft, RotateCcw } from "lucide-react";
 import { Button } from "@/popup/components/common/button/button/Button";
 
-interface IDuelsErrorProps {
+interface IAgentErrorProps {
 	message: string | null;
 	onRetry?: () => void;
 	onBack: () => void;
 }
 
-export const DuelsError = ({ message, onRetry, onBack }: IDuelsErrorProps) => {
+export const AgentError = ({ message, onRetry, onBack }: IAgentErrorProps) => {
 	return (
 		<div className="flex flex-col gap-4 p-4">
 			<div className="flex items-center gap-2.5">

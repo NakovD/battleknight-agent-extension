@@ -1,4 +1,4 @@
-import { DuelsError } from "@/popup/features/duels/components/DuelsError";
+import { AgentError } from "@/popup/components/common/agent/AgentError";
 import { DuelsForm } from "@/popup/features/duels/components/DuelsForm";
 import { DuelsStatus } from "@/popup/features/duels/components/DuelsStatus";
 import { useDuels } from "@/popup/features/duels/hooks/useDuels";
@@ -30,7 +30,7 @@ export const Duels = () => {
 
 	if (isError) {
 		return (
-			<DuelsError
+			<AgentError
 				message={errorMessage}
 				onRetry={duelsSettings ? handleRetry : undefined}
 				onBack={handleBack}
