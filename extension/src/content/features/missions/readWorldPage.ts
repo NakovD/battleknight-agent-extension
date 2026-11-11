@@ -3,6 +3,14 @@ import type {
 	MissionLocationsResult,
 	MissionsUnavailableReason,
 } from "@/common/features/missions/models/missionLocations";
+import {
+	allMissionButtons,
+	findLocationPopup,
+	isMissionButtonDisabled,
+	readFreeMissionPoints,
+	readLocationName,
+	readMissionCost,
+} from "@/content/features/missions/missionMap";
 
 /**
  * While the knight is away, /world shows a countdown instead of the map, and
@@ -44,51 +52,65 @@ export const readWorldPage = (
 		return { status: "unavailable", reason: "world-unreachable" };
 	}
 
-	if (areAllMissionsDisabled(doc)) {
-		return { status: "unavailable", reason: "not-enough-points" };
-	}
+	const locations = readLocations(doc);
 
-	return { status: "loaded", city: title, locations: readLocations(doc) };
+	switch (readMissionsBlocker(doc)) {
+		case "no-mission-points":
+			return { status: "unavailable", reason: "no-mission-points" };
+
+		case "no-hit-points":
+			// Hit points come back on their own, so the agent can be set up now
+			// and wait for them.
+			return {
+				status: "loaded",
+				city: title,
+				locations,
+				warning: "no-hit-points",
+			};
+
+		default:
+			return { status: "loaded", city: title, locations };
+	}
 };
 
 function readLocations(doc: Document): MissionLocation[] {
 	return Array.from(
 		doc.querySelectorAll<HTMLAnchorElement>("#mapBase a.mission[id]"),
-	).map((anchor) => ({
-		// The id is what the game's own chooseMission() submits for the location.
-		id: anchor.id,
-		name: readLocationName(doc, anchor) ?? anchor.id,
-	}));
+	).map((anchor) => {
+		const popup = findLocationPopup(doc, anchor);
+
+		return {
+			// The id is what the game's own chooseMission() submits for the location.
+			id: anchor.id,
+			name: (popup && readLocationName(popup)) ?? anchor.id,
+		};
+	});
 }
 
 /**
- * The map pins carry no text; the name is in the popup their rel points at.
- * By id rather than selector: an opened popup is copied into the page without
- * its ids, and that copy must not be read as another location.
+ * The game disables every mission button both when hit points and when
+ * mission points run out, without saying which. Only when every button is
+ * off: with few points left the larger missions go grey first, while a small
+ * one can still be done.
+ *
+ * Short on points means the cheapest mission costs more than what's left;
+ * anything else disabling them all is hit points.
  */
-function readLocationName(doc: Document, anchor: HTMLAnchorElement) {
-	const popupId = anchor.getAttribute("rel")?.replace(/^#/, "");
-	if (!popupId) return null;
+function readMissionsBlocker(doc: Document) {
+	const buttons = allMissionButtons(doc);
 
-	return (
-		doc
-			.getElementById(popupId)
-			?.querySelector(".missionName h3")
-			?.textContent?.trim() || null
-	);
-}
+	if (buttons.length === 0 || !buttons.every(isMissionButtonDisabled)) {
+		return null;
+	}
 
-/**
- * Only when every button is off: with few mission points left the larger
- * missions go grey first, while a small one can still be done.
- */
-function areAllMissionsDisabled(doc: Document) {
-	const buttons = Array.from(
-		doc.querySelectorAll("#squeezeBoxContent .specialButton"),
-	);
+	const costs = buttons
+		.map(readMissionCost)
+		.filter((cost): cost is number => cost !== null);
+	const points = readFreeMissionPoints(doc);
 
-	return (
-		buttons.length > 0 &&
-		buttons.every((button) => button.classList.contains("disabledSpecialBtn"))
-	);
+	// Unreadable numbers fall to hit points: waiting for them is harmless,
+	// while stopping for missing points would end the day by mistake.
+	if (points === null || costs.length === 0) return "no-hit-points";
+
+	return points < Math.min(...costs) ? "no-mission-points" : "no-hit-points";
 }

@@ -15,15 +15,7 @@ export const MissionsSizeStep = withMissionsForm({
 							key={option.value}
 							label={option.label}
 							isSelected={field.state.value === option.value}
-							onClick={() => {
-								field.handleChange(option.value);
-								// A starting point for the next step, not a rule: faster
-								// servers come back sooner.
-								form.setFieldValue(
-									"cooldownMinutes",
-									option.defaultCooldownMinutes,
-								);
-							}}
+							onClick={() => field.handleChange(option.value)}
 						/>
 					))}
 				</div>

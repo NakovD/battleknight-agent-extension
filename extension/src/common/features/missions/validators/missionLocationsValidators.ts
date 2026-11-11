@@ -16,8 +16,9 @@ export const missionLocationValidator = object({
  * is busy or the page is out of reach, so the extension does nothing.
  *
  * - busy: any other wait the game puts the knight in — work, a group mission...
- * - not-enough-points: the game disables every mission button for both hit
- *   points and mission points, without saying which one ran out.
+ * - no-mission-points: too few left for even a small mission — the day's
+ *   missions are done. (Missing hit points are only a warning on a loaded map:
+ *   they come back on their own.)
  * - duels-running: loading the map takes over the game tab, which would cut
  *   the duels agent off mid-step.
  */
@@ -26,7 +27,7 @@ export const missionsUnavailableReasonValidator = zodEnum([
 	"returning-from-mission",
 	"returning-from-duel",
 	"busy",
-	"not-enough-points",
+	"no-mission-points",
 	"game-not-open",
 	"duels-running",
 	"world-unreachable",
@@ -37,6 +38,8 @@ export const missionLocationsResultValidator = discriminatedUnion("status", [
 		status: literal("loaded"),
 		city: string(),
 		locations: missionLocationValidator.array(),
+		/** Every mission is greyed out until the knight has hit points again. */
+		warning: literal("no-hit-points").optional(),
 	}),
 	object({
 		status: literal("unavailable"),

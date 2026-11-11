@@ -70,13 +70,51 @@ describe("readWorldPage", () => {
 		expect(result.status === "loaded" && result.locations).toHaveLength(5);
 	});
 
-	it("когато всички мисии са забранени, казва че няма достатъчно точки", () => {
+	it("без точки живот зарежда локациите с предупреждение", () => {
+		// Бутоните са сиви, но точките за мисия (190) стигат — значи е от живота.
 		loadPage(worldNoHealth);
+
+		expect(readWorldPage()).toMatchObject({
+			status: "loaded",
+			city: "Талфор",
+			warning: "no-hit-points",
+		});
+	});
+
+	it("без точки за мисия казва, че мисиите за деня са свършили", () => {
+		loadPage(worldNoHealth);
+		// Няма запазена такава страница — същата, но с по-малко точки от най-
+		// евтината мисия (20).
+		for (const points of document.querySelectorAll(
+			"#squeezeBoxContent .missionPoints span",
+		)) {
+			points.textContent = "15";
+		}
 
 		expect(readWorldPage()).toEqual({
 			status: "unavailable",
-			reason: "not-enough-points",
+			reason: "no-mission-points",
 		});
+	});
+
+	it("точно колкото струва най-евтината мисия все още стига", () => {
+		loadPage(worldNoHealth);
+		for (const points of document.querySelectorAll(
+			"#squeezeBoxContent .missionPoints span",
+		)) {
+			points.textContent = "20";
+		}
+
+		expect(readWorldPage()).toMatchObject({ warning: "no-hit-points" });
+	});
+
+	it("без бутони за мисии изобщо няма предупреждение", () => {
+		loadPage(worldNormal);
+		for (const button of document.querySelectorAll(".specialButton")) {
+			button.remove();
+		}
+
+		expect(readWorldPage()).not.toHaveProperty("warning");
 	});
 
 	it("с част от мисиите забранени локациите пак се зареждат", () => {
@@ -88,6 +126,7 @@ describe("readWorldPage", () => {
 			});
 
 		expect(readWorldPage()).toMatchObject({ status: "loaded" });
+		expect(readWorldPage()).not.toHaveProperty("warning");
 	});
 
 	it.each([

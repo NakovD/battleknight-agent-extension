@@ -2,7 +2,10 @@ import { Map as MapIcon, RotateCcw } from "lucide-react";
 import { Button } from "@/popup/components/common/button/button/Button";
 import { OptionButton } from "@/popup/components/common/form/OptionButton";
 import { missionsFormDefaultValues } from "@/popup/features/missions/constants/missionsFormDefaultValues";
-import { missionsUnavailableMessages } from "@/popup/features/missions/constants/missionsUnavailableMessages";
+import {
+	missionsNoHitPointsWarning,
+	missionsUnavailableMessages,
+} from "@/popup/features/missions/constants/missionsUnavailableMessages";
 import { withMissionsForm } from "@/popup/features/missions/form/missionsContext";
 import type { MissionLocationsState } from "@/popup/features/missions/hooks/useMissionLocations";
 
@@ -53,6 +56,13 @@ export const MissionsLocationStep = withMissionsForm({
 						)}
 					</p>
 				)}
+
+				{locationsState.status === "loaded" &&
+					locationsState.warning === "no-hit-points" && (
+						<p role="status" className="text-[11px] text-amber-500/80">
+							{missionsNoHitPointsWarning}
+						</p>
+					)}
 
 				{locationsState.status === "loaded" && (
 					<form.Field

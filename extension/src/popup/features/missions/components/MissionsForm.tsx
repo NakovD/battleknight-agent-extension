@@ -1,7 +1,6 @@
 import { Play } from "lucide-react";
 import { Button } from "@/popup/components/common/button/button/Button";
 import { Stepper } from "@/popup/components/common/stepper/Stepper";
-import { MissionsCooldownStep } from "@/popup/features/missions/components/MissionsCooldownStep";
 import { MissionsKarmaStep } from "@/popup/features/missions/components/MissionsKarmaStep";
 import { MissionsLocationStep } from "@/popup/features/missions/components/MissionsLocationStep";
 import { MissionsSizeStep } from "@/popup/features/missions/components/MissionsSizeStep";
@@ -61,13 +60,6 @@ export const MissionsForm = ({
 								title: "Mission size",
 								isComplete: shape.size.safeParse(values.size).success,
 								content: <MissionsSizeStep form={form} />,
-							},
-							{
-								title: "Cooldown",
-								isComplete: shape.cooldownMinutes.safeParse(
-									values.cooldownMinutes,
-								).success,
-								content: <MissionsCooldownStep form={form} />,
 							},
 						]}
 						finalAction={

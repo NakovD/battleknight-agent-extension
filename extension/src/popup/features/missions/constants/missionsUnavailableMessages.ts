@@ -10,8 +10,8 @@ export const missionsUnavailableMessages: Record<
 	"returning-from-duel":
 		"Your knight is returning from a duel. Try again once they are back.",
 	busy: "Your knight is busy. Try again once they are free.",
-	"not-enough-points":
-		"Your knight doesn't have enough hit points or mission points for a mission right now.",
+	"no-mission-points":
+		"Your knight has no mission points left for today. Try again once they have come back.",
 	"game-not-open":
 		"Open the game in a tab first, then load the locations again.",
 	"duels-running":
@@ -19,3 +19,6 @@ export const missionsUnavailableMessages: Record<
 	"world-unreachable":
 		"Could not open the world map. Make sure the game is open and you are signed in.",
 };
+
+export const missionsNoHitPointsWarning =
+	"Your knight has no hit points right now. You can still start: the extension waits until they come back, from the game or a potion.";

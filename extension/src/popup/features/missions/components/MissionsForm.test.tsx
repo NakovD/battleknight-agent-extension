@@ -89,6 +89,13 @@ describe("MissionsForm", () => {
 		expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
 	});
 
+	it("без точки живот показва локациите заедно с предупреждение", () => {
+		renderForm({ ...loaded, warning: "no-hit-points" });
+
+		expect(screen.getByRole("status")).toHaveTextContent("no hit points");
+		expect(screen.getByRole("button", { name: "Гора" })).toBeInTheDocument();
+	});
+
 	it("при непознато чакане показва текста на играта", () => {
 		renderForm({ status: "unavailable", reason: "busy", detail: "Работа" });
 
@@ -122,36 +129,17 @@ describe("MissionsForm", () => {
 		);
 	});
 
-	it("изборът на размер попълва стандартния cooldown", async () => {
+	it("размерът е последната стъпка и от нея се стартира", async () => {
 		renderForm();
 
 		fireEvent.click(screen.getByRole("button", { name: "Гора" }));
 		await clickNext("Karma");
 		await clickNext("Mission size");
-		fireEvent.click(screen.getByRole("button", { name: /Medium/ }));
-		await clickNext("Cooldown");
 
-		expect(screen.getByRole("spinbutton")).toHaveValue(20);
-	});
-
-	it("празен cooldown показва грешка и забранява старта", async () => {
-		renderForm();
-
-		fireEvent.click(screen.getByRole("button", { name: "Гора" }));
-		await clickNext("Karma");
-		await clickNext("Mission size");
-		await clickNext("Cooldown");
-
-		fireEvent.change(screen.getByRole("spinbutton"), {
-			target: { value: "" },
-		});
-
-		expect(
-			await screen.findByText("Enter the cooldown in minutes"),
-		).toBeInTheDocument();
+		expect(screen.getByText("Step 3 of 3")).toBeInTheDocument();
 		expect(
 			screen.getByRole("button", { name: "Start missions" }),
-		).toBeDisabled();
+		).toBeEnabled();
 	});
 
 	it("подава всички избрани настройки при старт", async () => {
@@ -162,10 +150,6 @@ describe("MissionsForm", () => {
 		fireEvent.click(screen.getByRole("checkbox", { name: "Dark karma" }));
 		await clickNext("Mission size");
 		fireEvent.click(screen.getByRole("button", { name: /Large/ }));
-		await clickNext("Cooldown");
-		fireEvent.change(screen.getByRole("spinbutton"), {
-			target: { value: "12" },
-		});
 		fireEvent.click(screen.getByRole("button", { name: "Start missions" }));
 
 		await vi.waitFor(() =>
@@ -173,7 +157,6 @@ describe("MissionsForm", () => {
 				location: { id: "cave", name: "Пещера" },
 				karma: "dark",
 				size: "large",
-				cooldownMinutes: 12,
 			}),
 		);
 	});
