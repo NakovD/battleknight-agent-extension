@@ -3,6 +3,7 @@ import worldNoHealth from "./fixtures/world-no-health.html?raw";
 import worldNormal from "./fixtures/world-normal.html?raw";
 import worldOtherCity from "./fixtures/world-other-city.html?raw";
 import worldReturningDuel from "./fixtures/world-returning-duel.html?raw";
+import worldReturningGroup from "./fixtures/world-returning-group.html?raw";
 import worldReturningMission from "./fixtures/world-returning-mission.html?raw";
 import worldTravelling from "./fixtures/world-travelling.html?raw";
 import { readWorldPage } from "./readWorldPage";
@@ -101,6 +102,18 @@ describe("readWorldPage", () => {
 		loadPage(html);
 
 		expect(readWorldPage()).toEqual({ status: "unavailable", reason, detail });
+	});
+
+	it("връщането от групова мисия е същото като от обикновена", () => {
+		// Играта показва една и съща страница и за двете — и за агента това е
+		// едно и също: чака таймера.
+		loadPage(worldReturningGroup);
+
+		expect(readWorldPage()).toEqual({
+			status: "unavailable",
+			reason: "returning-from-mission",
+			detail: "Рицарят се връща от мисия",
+		});
 	});
 
 	it("непознато чакане се отчита като заето, с текста на играта", () => {

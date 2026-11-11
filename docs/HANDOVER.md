@@ -146,7 +146,8 @@ free-text input.
 
 - **AI integration** — `AiDuelsEngine` behind the existing engine interface,
   using Claude Vision to read the page instead of DOM selectors.
-- **Missions tab.**
+- **Missions tab** — in progress on `feature/missions-popup`. Game behaviour,
+  decisions and ideas for later are in [MISSIONS.md](MISSIONS.md).
 - **Dashboard** — attack history and statistics.
 
 ---
