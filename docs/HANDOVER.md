@@ -91,16 +91,31 @@ two debugging sessions.
 
 Roughly in the order worth caring about.
 
-1. **The renewal has never been watched in a browser.** It fires 15 minutes into
+1. **Both agents run in every open game tab.** Seen live on 2026-11-12. The
+   agent's state is one shared record in `chrome.storage`, and every game tab's
+   content script acts on it. With two tabs open, say s26 and s27, duels
+   configured for s27 also run on s26, where those filters match nobody, so the
+   agent stops with "none of the knights matched". Missions would do the same,
+   and worse: two tabs could start missions in parallel.
+
+   The fix is to tie a run to one tab. On Start, the background records the
+   game tab it was started for (its id, plus the server's origin as a sanity
+   check). Each content script asks the background whether it is that tab,
+   from `sender.tab.id`, before taking a step. Questions to settle first:
+   which tab counts when the popup starts an agent (the active one?), what
+   happens when that tab is closed (stop, with a reason), and whether one agent
+   per server could ever be wanted. Duels' settings would then also need
+   keeping per server.
+2. **The renewal has never been watched in a browser.** It fires 15 minutes into
    a live session, so it needs a real sit-and-wait. Everything else about it is
    unit tested and was smoke tested against a running API.
-2. **The circuit breaker is only unit tested.** Never verified live.
-3. **Intermittent build and test flakiness.** The duplicated-React build and a
+3. **The circuit breaker is only unit tested.** Never verified live.
+4. **Intermittent build and test flakiness.** The duplicated-React build and a
    whole vitest run failing to collect with `Tests  no tests` have only ever
    appeared when several tools ran in one shell invocation. Run separately,
    `tsc -b`, `vitest run` and `npm run build` are reliable. The mechanism of the
    first is understood and guarded; the trigger of either is not pinned down.
-4. **`extension/src/sidepanel/` is leftover CRXJS scaffold** — an empty App with
+5. **`extension/src/sidepanel/` is leftover CRXJS scaffold** — an empty App with
    the React logo. The manifest declares it, so it loads React for nothing.
    Safe to delete along with the `side_panel` entry.
 

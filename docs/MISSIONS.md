@@ -1,8 +1,9 @@
 # Missions — how the game works and what we decided
 
 Working notes for the Missions agent, on `feature/missions-popup`. The popup,
-location loading and the agent are built and unit tested against saved pages.
-*The agent has not yet been run in a live game.*
+location loading and the agent are built, unit tested against saved pages,
+and verified in the live game on 2026-11-12: missions start, reports are
+recorded, and the agent carries on by itself.
 
 Where the code is, under `extension/src`:
 
@@ -78,7 +79,7 @@ If the countdown can't be read, check again after a minute. This is a safety
 net, not a setting. The cooldown step leaves the popup form, which keeps
 location, karma and size.
 
-### A random delay of 15–90 seconds between missions
+### A random delay of 15–45 seconds between missions
 Starting a mission at the exact second the knight returns, every time, looks
 automated.
 
@@ -136,6 +137,10 @@ Save each one into `html/` as before, then add a trimmed fixture and a test.
   apart from missing hit points is tested on an edited fixture only.
 
 ## Later — ideas, not planned
+
+- **One agent per game tab.** Today the agent acts in every open game tab.
+  This applies to duels too, so it is written up in
+  [HANDOVER.md](HANDOVER.md#still-open).
 
 - **A missions report on the Dashboard:** silver per location, size and karma,
   to find where missions pay best, and how often each payout type comes up.

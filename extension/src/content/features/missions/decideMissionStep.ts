@@ -20,7 +20,7 @@ import {
 
 /** On top of the game's countdown, so missions don't start like clockwork. */
 export const RANDOM_DELAY_MIN_MS = 15_000;
-export const RANDOM_DELAY_MAX_MS = 90_000;
+export const RANDOM_DELAY_MAX_MS = 45_000;
 
 /** Hit points come back on the full hour; a potion can bring them sooner. */
 export const HIT_POINTS_RECHECK_MS = 15 * 60_000;
