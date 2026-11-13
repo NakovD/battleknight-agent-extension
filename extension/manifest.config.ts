@@ -15,6 +15,9 @@ export default defineManifest({
 		default_popup: "src/popup/index.html",
 	},
 	permissions: ["sidePanel", "contentSettings", "storage"],
+	// Lets the background find the game tab and send it to /world. Same pattern as
+	// the content script, so it asks the player for nothing new.
+	host_permissions: ["https://*.battleknight.gameforge.com/*"],
 	background: {
 		service_worker: "src/background/main.ts",
 		type: "module",
