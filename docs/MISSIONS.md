@@ -1,6 +1,6 @@
 # Missions — how the game works and what we decided
 
-Working notes for the Missions agent, on `feature/missions-popup`. The popup,
+Working notes for the Missions agent, shipped in PR #6. The popup,
 location loading and the agent are built, unit tested against saved pages,
 and verified in the live game on 2026-11-12: missions start, reports are
 recorded, and the agent carries on by itself.
@@ -19,7 +19,8 @@ Where the code is, under `extension/src`:
 
 What the saved pages in `html/` show. They are untracked; trimmed copies, with
 the character's name replaced, live in
-`extension/src/content/features/missions/fixtures/`.
+`extension/src/content/features/missions/fixtures/`; `extension/scripts/extractGameFixtures.mjs`
+makes them (see the handover).
 
 ### The world page
 - **`/world` shows one of two things.** When the knight is free, it shows the
