@@ -65,9 +65,9 @@ export default defineConfig({
 	build: {
 		rollupOptions: {
 			output: {
-				// Popup и sidepanel и двата зареждат React — без това Rollup
-				// дублира React в отделните entry chunk-ове (popup/sidepanel),
-				// което води до два инстанцирани копия и "useState of null" крашове.
+				// Only the popup loads React today, but any second page that does
+				// would get its own copy inside its entry chunk without this — two
+				// React instances and "useState of null" crashes. One shared chunk.
 				manualChunks(id) {
 					if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) {
 						return "vendor-react";

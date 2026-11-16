@@ -1,4 +1,4 @@
-import type { IDuelsExtensionController } from "@/background/features/duels/models/duelsExtensionController.ts ";
+import type { IDuelsExtensionController } from "@/background/features/duels/models/duelsExtensionController";
 import type { ChromeStorageMissionsController } from "@/background/features/missions/chromeStorageMissionsController";
 import type { MessageHandler } from "@/background/models/messageHandler";
 import type { MissionsAgentResponse } from "@/common/features/missions/models/missionsState";

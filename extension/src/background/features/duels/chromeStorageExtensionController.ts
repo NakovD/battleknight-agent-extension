@@ -1,4 +1,4 @@
-import type { IDuelsExtensionController } from "@/background/features/duels/models/duelsExtensionController.ts ";
+import type { IDuelsExtensionController } from "@/background/features/duels/models/duelsExtensionController";
 import {
 	DUELS_INITIAL_EXTENSION_STATE,
 	DUELS_STORAGE_KEY,

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { DUELS_INITIAL_EXTENSION_STATE } from "@/common/features/duels/constants/duelsStateConstants";
 import { createDuelsMessageHandler } from "./duelsMessageHandler";
-import type { IDuelsExtensionController } from "./models/duelsExtensionController.ts ";
+import type { IDuelsExtensionController } from "./models/duelsExtensionController";
 
 const settings = {
 	levelMin: 0,

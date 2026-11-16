@@ -1,4 +1,4 @@
-import type { IDuelsExtensionController } from "@/background/features/duels/models/duelsExtensionController.ts ";
+import type { IDuelsExtensionController } from "@/background/features/duels/models/duelsExtensionController";
 import type { MessageHandler } from "@/background/models/messageHandler";
 import { duelsSettingsValidator } from "@/common/features/duels/validators/duelsSettingsValidator";
 import type { ExtensionMessageResponse } from "@/common/models/extension";
