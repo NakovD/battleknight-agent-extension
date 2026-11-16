@@ -1,4 +1,4 @@
-import type { IDuelsExtensionController } from "@/background/features/duels/models/duelsExtensionController.ts ";
+import type { IDuelsExtensionController } from "@/background/features/duels/models/duelsExtensionController";
 import type { GameTabWorldMapReader } from "@/background/features/missions/gameTabWorldMapReader";
 import type { MessageHandler } from "@/background/models/messageHandler";
 import type { MissionLocationsResult } from "@/common/features/missions/models/missionLocations";

@@ -191,13 +191,7 @@ Roughly in the order worth caring about.
    appeared when several tools ran in one shell invocation. Run separately,
    `tsc -b`, `vitest run` and `npm run build` are reliable. The mechanism of the
    first is understood and guarded; the trigger of either is not pinned down.
-5. **`extension/src/sidepanel/` is leftover CRXJS scaffold** — an empty App with
-   the React logo. The manifest declares it, so it loads React for nothing.
-   Safe to delete along with the `side_panel` entry.
-
-   It is now formatted and null-checked like the rest of the project, which is
-   wasted polish on dead code — a reason to decide about it rather than leave it.
-6. **Missions pages we have no sample of:** a lost mission's report, working,
+5. **Missions pages we have no sample of:** a lost mission's report, working,
    and a map with 0 mission points. Listed as To do in [MISSIONS.md](MISSIONS.md),
    along with what is assumed until then.
 

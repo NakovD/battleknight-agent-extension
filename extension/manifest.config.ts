@@ -14,7 +14,7 @@ export default defineManifest({
 		},
 		default_popup: "src/popup/index.html",
 	},
-	permissions: ["sidePanel", "contentSettings", "storage"],
+	permissions: ["storage"],
 	// Lets the background find the game tab and send it to /world. Same pattern as
 	// the content script, so it asks the player for nothing new.
 	host_permissions: ["https://*.battleknight.gameforge.com/*"],
@@ -28,7 +28,4 @@ export default defineManifest({
 			matches: ["https://*.battleknight.gameforge.com/*"],
 		},
 	],
-	side_panel: {
-		default_path: "src/sidepanel/index.html",
-	},
 });
