@@ -1,6 +1,7 @@
 import {
 	discriminatedUnion,
 	literal,
+	number,
 	object,
 	string,
 	enum as zodEnum,
@@ -52,6 +53,7 @@ export const missionLocationsResultValidator = discriminatedUnion("status", [
 /** Popup → background: take the game tab to /world and read it. */
 export const missionsMessageValidator = object({
 	type: literal("MISSIONS_LOAD_LOCATIONS"),
+	tabId: number().int().nonnegative(),
 });
 
 /** Background → the game tab's content script: read the page you're on. */

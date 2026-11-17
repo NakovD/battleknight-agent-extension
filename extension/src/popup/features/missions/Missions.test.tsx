@@ -37,13 +37,56 @@ const renderIdle = async () => {
 	return screen.findByRole("button", { name: "Load locations" });
 };
 
+/** Табът, над който е отворен popup-ът. */
+const TAB = 7;
+
+const setActiveTab = (tab: Partial<chrome.tabs.Tab> | undefined) => {
+	(globalThis.chrome as unknown as { tabs: unknown }).tabs = {
+		query: vi.fn(async () => (tab ? [tab] : [])),
+	};
+};
+
 describe("Missions", () => {
 	let runtime: ReturnType<typeof installChromeRuntimeMock>;
 
 	beforeEach(() => {
 		vi.resetAllMocks();
 		runtime = installChromeRuntimeMock();
+		setActiveTab({
+			id: TAB,
+			url: "https://s27-bg.battleknight.gameforge.com/world",
+		});
 		agentSend.mockResolvedValue({ ok: true, state: MISSIONS_INITIAL_STATE });
+	});
+
+	describe("таб", () => {
+		it("извън таб на играта казва да се отвори над таба с играта", async () => {
+			setActiveTab({ id: TAB, url: "https://www.google.com/" });
+
+			render(<Missions />);
+
+			expect(await screen.findByRole("status")).toHaveTextContent(
+				"Open this popup over the game tab",
+			);
+			expect(agentSend).not.toHaveBeenCalled();
+		});
+
+		it("пита за агента на таба, над който е отворен", async () => {
+			await renderIdle();
+
+			expect(agentSend).toHaveBeenCalledWith({
+				type: "MISSIONS_GET_STATUS",
+				tabId: TAB,
+			});
+		});
+
+		it("зарежда локациите на своя таб", async () => {
+			load.mockResolvedValue({ status: "loaded", city: "Т", locations: [] });
+
+			fireEvent.click(await renderIdle());
+
+			expect(load).toHaveBeenCalledWith(TAB);
+		});
 	});
 
 	describe("форма", () => {
@@ -106,11 +149,12 @@ describe("Missions", () => {
 		});
 	});
 
-	it("не показва формата, преди да знае дали агентът вече работи", () => {
+	it("не показва формата, преди да знае дали агентът вече работи", async () => {
 		agentSend.mockReturnValue(new Promise(() => {}));
 
 		render(<Missions />);
 
+		await vi.waitFor(() => expect(agentSend).toHaveBeenCalled());
 		expect(screen.getByText("Loading...")).toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: "Load locations" })).toBeNull();
 	});
@@ -131,9 +175,12 @@ describe("Missions", () => {
 		agentSend.mockResolvedValue({ ok: true, state: running });
 		fireEvent.click(screen.getByRole("button", { name: "Start missions" }));
 
-		expect(await screen.findByText("Missions are running")).toBeInTheDocument();
+		expect(
+			await screen.findByText("Missions are running on s27-bg"),
+		).toBeInTheDocument();
 		expect(agentSend).toHaveBeenCalledWith({
 			type: "MISSIONS_START",
+			tabId: TAB,
 			payload: {
 				location: { id: "Volcano", name: "Вулкан" },
 				city: "Талфор",
@@ -207,16 +254,20 @@ describe("Missions", () => {
 				await screen.findByRole("button", { name: "Stop missions" }),
 			);
 
-			expect(agentSend).toHaveBeenCalledWith({ type: "MISSIONS_STOP" });
+			expect(agentSend).toHaveBeenCalledWith({
+				type: "MISSIONS_STOP",
+				tabId: TAB,
+			});
 		});
 
 		it("обновява се от съобщенията на background-а", async () => {
 			render(<Missions />);
-			await screen.findByText("Missions are running");
+			await screen.findByText("Missions are running on s27-bg");
 
 			act(() => {
 				runtime.dispatchMessage({
 					type: "MISSIONS_STATUS_UPDATE",
+					tabId: TAB,
 					payload: {
 						...running,
 						run: { missions: 9, wins: 9, losses: 0, silver: 0 },
@@ -225,6 +276,24 @@ describe("Missions", () => {
 			});
 
 			expect(screen.getByText("9 / 0")).toBeInTheDocument();
+		});
+
+		it("не показва статуса на агент от друг таб", async () => {
+			render(<Missions />);
+			await screen.findByText("Missions are running on s27-bg");
+
+			act(() => {
+				runtime.dispatchMessage({
+					type: "MISSIONS_STATUS_UPDATE",
+					tabId: 9,
+					payload: {
+						...running,
+						run: { missions: 9, wins: 9, losses: 0, silver: 0 },
+					},
+				});
+			});
+
+			expect(screen.queryByText("9 / 0")).toBeNull();
 		});
 	});
 
@@ -273,7 +342,10 @@ describe("Missions", () => {
 			render(<Missions />);
 			fireEvent.click(await screen.findByRole("button", { name: "Go back" }));
 
-			expect(agentSend).toHaveBeenCalledWith({ type: "MISSIONS_STOP" });
+			expect(agentSend).toHaveBeenCalledWith({
+				type: "MISSIONS_STOP",
+				tabId: TAB,
+			});
 		});
 	});
 });

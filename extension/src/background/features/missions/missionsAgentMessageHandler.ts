@@ -4,8 +4,9 @@ import type { MessageHandler } from "@/background/models/messageHandler";
 import type { MissionsAgentResponse } from "@/common/features/missions/models/missionsState";
 import { missionsAgentMessageValidator } from "@/common/features/missions/validators/missionsStateValidators";
 
+/** Duels still act in every game tab, so they'd fight any tab's missions. */
 export const DUELS_RUNNING_ERROR =
-	"The duels agent is running. Stop it first: both agents drive the same game tab.";
+	"The duels agent is running. Stop it first: it acts in every game tab, this one included.";
 
 export const createMissionsAgentMessageHandler =
 	(
@@ -28,16 +29,18 @@ export const createMissionsAgentMessageHandler =
 						return { ok: false, error: DUELS_RUNNING_ERROR };
 					}
 
-					await missions.start(message.payload);
-					return { ok: true, state: await missions.getStatus() };
+					await missions.start(message.tabId, message.payload);
+					break;
 
 				case "MISSIONS_STOP":
-					await missions.stop();
-					return { ok: true, state: await missions.getStatus() };
+					await missions.stop(message.tabId);
+					break;
 
 				case "MISSIONS_GET_STATUS":
-					return { ok: true, state: await missions.getStatus() };
+					break;
 			}
+
+			return { ok: true, state: await missions.getStatus(message.tabId) };
 		};
 
 		return handle().catch((err): MissionsAgentResponse => {

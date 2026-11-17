@@ -21,6 +21,12 @@ import {
  */
 export const missionRecordValidator = object({
 	finishedAt: string(),
+	/**
+	 * The game server's host, e.g. s27-bg.battleknight.gameforge.com — which
+	 * account the mission was for. Missing from records made before agents ran
+	 * per tab, which must still read back.
+	 */
+	server: string().optional(),
 	city: string(),
 	location: missionLocationValidator,
 	karma: missionKarmaValidator,
@@ -74,13 +80,17 @@ export const missionsStateValidator = object({
 	consecutiveNavigations: number(),
 });
 
+/** The game tab whose agent a message is about — each tab runs its own. */
+const tabIdValidator = number().int().nonnegative();
+
 export const missionsAgentMessageValidator = discriminatedUnion("type", [
 	object({
 		type: literal("MISSIONS_START"),
+		tabId: tabIdValidator,
 		payload: missionsSettingsValidator,
 	}),
-	object({ type: literal("MISSIONS_STOP") }),
-	object({ type: literal("MISSIONS_GET_STATUS") }),
+	object({ type: literal("MISSIONS_STOP"), tabId: tabIdValidator }),
+	object({ type: literal("MISSIONS_GET_STATUS"), tabId: tabIdValidator }),
 ]);
 
 export const missionsAgentResponseValidator = discriminatedUnion("ok", [
@@ -91,5 +101,15 @@ export const missionsAgentResponseValidator = discriminatedUnion("ok", [
 /** Background → popup, whenever the state changes. */
 export const missionsStatusUpdateValidator = object({
 	type: literal("MISSIONS_STATUS_UPDATE"),
+	tabId: tabIdValidator,
 	payload: missionsStateValidator,
+});
+
+/** Content script → background: which tab am I? Only the background can tell. */
+export const missionsWhoAmIMessageValidator = object({
+	type: literal("MISSIONS_WHO_AM_I"),
+});
+
+export const missionsWhoAmIResponseValidator = object({
+	tabId: tabIdValidator,
 });

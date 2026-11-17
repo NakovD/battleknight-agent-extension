@@ -125,6 +125,41 @@ Like the duels status screen, plus:
 - **what it is waiting for**, with a countdown: the knight returning, hit
   points, or the random delay.
 
+### Missions, per tab
+Each game tab runs its own missions agent, so two accounts can do missions at
+the same time, one tab each. Added on 2026-11-17, after the shared agent acted
+in every open tab at once.
+
+- **The popup controls the tab it was opened over.** Over anything other than
+  the game it says to open it over the game tab. "Load locations" navigates
+  that tab only. The status screen names the server ("Missions are running on
+  s27-bg"), so two accounts' tabs can't be mistaken for each other.
+- **One state per tab**, in `chrome.storage.session` under
+  `missionsAgent:<tab id>`. Session storage ends with the browser, just like
+  tab ids do. In local storage, a stale id could match a new tab after a
+  restart and start an agent in it. The background opens session storage to
+  content scripts at startup.
+- **A content script learns its tab id from the background**
+  (`MISSIONS_WHO_AM_I`, answered from `sender.tab.id`). It can't find out
+  alone. The answer waits until session storage is open to content scripts,
+  because the script reads it right after.
+- **Any agent starting wakes every tab.** Each tab checks its own state and
+  only the started one acts. Simpler than learning the tab id up front.
+- **Closing a tab removes its agent.**
+- **The history stays shared**, in local storage, and each record now carries
+  its server, so statistics can be split by account. Records made before this
+  have no server and still read back.
+
+*Known and accepted:* two tabs finishing a mission within the same instant
+could both read the history before either writes, and one record would be
+lost. It needs two reports landing within milliseconds, and it costs one
+statistic, never a mission.
+
+Duels still act in every tab, so the two agents keep excluding each other.
+Duels won't start while any tab runs missions, and missions won't start while
+duels run. That ends once duels go per tab too
+([HANDOVER.md](HANDOVER.md#still-open)).
+
 ## To do — pages we still need
 
 Save each one into `html/` as before, then add a trimmed fixture and a test.
@@ -138,10 +173,6 @@ Save each one into `html/` as before, then add a trimmed fixture and a test.
   apart from missing hit points is tested on an edited fixture only.
 
 ## Later — ideas, not planned
-
-- **One agent per game tab.** Today the agent acts in every open game tab.
-  This applies to duels too, so it is written up in
-  [HANDOVER.md](HANDOVER.md#still-open).
 
 - **A missions report on the Dashboard:** silver per location, size and karma,
   to find where missions pay best, and how often each payout type comes up.

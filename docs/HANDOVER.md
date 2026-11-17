@@ -165,21 +165,20 @@ two debugging sessions.
 
 Roughly in the order worth caring about.
 
-1. **Both agents run in every open game tab.** Seen live on 2026-11-12. The
-   agent's state is one shared record in `chrome.storage`, and every game tab's
-   content script acts on it. With two tabs open, say s26 and s27, duels
+1. **The duels agent runs in every open game tab.** Seen live on 2026-11-12.
+   Its state is one shared record in `chrome.storage.local`, and every game
+   tab's content script acts on it. With two tabs open, say s26 and s27, duels
    configured for s27 also run on s26, where those filters match nobody, so the
-   agent stops with "none of the knights matched". Missions would do the same,
-   and worse: two tabs could start missions in parallel.
+   agent stops with "none of the knights matched".
 
-   The fix is to tie a run to one tab. On Start, the background records the
-   game tab it was started for (its id, plus the server's origin as a sanity
-   check). Each content script asks the background whether it is that tab,
-   from `sender.tab.id`, before taking a step. Questions to settle first:
-   which tab counts when the popup starts an agent (the active one?), what
-   happens when that tab is closed (stop, with a reason), and whether one agent
-   per server could ever be wanted. Duels' settings would then also need
-   keeping per server.
+   **Missions already run per tab**, and duels should follow the same pattern
+   (see "Missions, per tab" in [MISSIONS.md](MISSIONS.md)). The popup controls
+   the tab it was opened over. State lives in `chrome.storage.session`, keyed by
+   tab id. A content script learns its own id from the background. A closed
+   tab's state is removed. Duels' settings would also need keeping per server.
+
+   Until then, the two agents still exclude each other: duels won't start while
+   any tab runs missions, and missions won't start while duels run.
 2. **The renewal has never been watched in a browser.** It fires 15 minutes into
    a live session, so it needs a real sit-and-wait. Everything else about it is
    unit tested and was smoke tested against a running API.

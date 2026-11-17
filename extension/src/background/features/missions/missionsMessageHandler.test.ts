@@ -20,21 +20,27 @@ describe("createMissionsMessageHandler", () => {
 	it("връща null за чужди съобщения", () => {
 		expect(handle({ type: "SETTINGS_LOAD" })).toBeNull();
 		expect(handle({ type: "MISSIONS_READ_WORLD" })).toBeNull();
+		expect(handle({ type: "MISSIONS_LOAD_LOCATIONS" })).toBeNull();
 	});
 
 	it("връща прочетените локации", async () => {
 		worldMap.read.mockResolvedValue(loaded);
 
-		expect(await handle({ type: "MISSIONS_LOAD_LOCATIONS" })).toEqual(loaded);
+		expect(await handle({ type: "MISSIONS_LOAD_LOCATIONS", tabId: 7 })).toEqual(
+			loaded,
+		);
+		expect(worldMap.read).toHaveBeenCalledWith(7);
 	});
 
 	it("не пипа таба, докато агентът за дуели работи", async () => {
 		duels.getStatus.mockResolvedValue({ status: "running" });
 
-		expect(await handle({ type: "MISSIONS_LOAD_LOCATIONS" })).toEqual({
-			status: "unavailable",
-			reason: "duels-running",
-		});
+		expect(await handle({ type: "MISSIONS_LOAD_LOCATIONS", tabId: 7 })).toEqual(
+			{
+				status: "unavailable",
+				reason: "duels-running",
+			},
+		);
 		expect(worldMap.read).not.toHaveBeenCalled();
 	});
 
@@ -42,9 +48,11 @@ describe("createMissionsMessageHandler", () => {
 		vi.spyOn(console, "error").mockImplementation(() => {});
 		worldMap.read.mockRejectedValue(new Error("boom"));
 
-		expect(await handle({ type: "MISSIONS_LOAD_LOCATIONS" })).toEqual({
-			status: "unavailable",
-			reason: "world-unreachable",
-		});
+		expect(await handle({ type: "MISSIONS_LOAD_LOCATIONS", tabId: 7 })).toEqual(
+			{
+				status: "unavailable",
+				reason: "world-unreachable",
+			},
+		);
 	});
 });

@@ -7,7 +7,8 @@ export type MissionLocationsState =
 	| { status: "loading" }
 	| MissionLocationsResult;
 
-export const useMissionLocations = () => {
+/** The locations on the map of `tabId`, the game tab the popup controls. */
+export const useMissionLocations = (tabId: number) => {
 	const [locationsState, setLocationsState] = useState<MissionLocationsState>({
 		status: "idle",
 	});
@@ -16,7 +17,7 @@ export const useMissionLocations = () => {
 		setLocationsState({ status: "loading" });
 
 		try {
-			setLocationsState(await missionsMessenger.loadLocations());
+			setLocationsState(await missionsMessenger.loadLocations(tabId));
 		} catch {
 			setLocationsState({ status: "unavailable", reason: "world-unreachable" });
 		}

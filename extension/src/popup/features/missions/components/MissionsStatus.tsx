@@ -1,4 +1,5 @@
 import { Square } from "lucide-react";
+import { shortServerName } from "@/common/features/game/gameUrl";
 import type {
 	MissionsState,
 	MissionsWait,
@@ -13,6 +14,8 @@ import {
 
 interface IMissionsStatusProps {
 	state: MissionsState;
+	/** The game server of the tab this agent runs in. */
+	host: string;
 	onStop: () => void;
 }
 
@@ -22,7 +25,11 @@ const waitLabels: Record<MissionsWait["reason"], string> = {
 	retry: "Checking the game again in",
 };
 
-export const MissionsStatus = ({ state, onStop }: IMissionsStatusProps) => {
+export const MissionsStatus = ({
+	state,
+	host,
+	onStop,
+}: IMissionsStatusProps) => {
 	const { settings, wait, lastMission, run } = state;
 	const remainingMs = useCountdown(wait?.until ?? null);
 
@@ -34,7 +41,7 @@ export const MissionsStatus = ({ state, onStop }: IMissionsStatusProps) => {
 					<span className="relative inline-flex h-2 w-2 bg-amber-400" />
 				</span>
 				<span className="text-[11px] uppercase tracking-widest font-serif text-amber-300/80">
-					Missions are running
+					Missions are running on {shortServerName(host)}
 				</span>
 			</div>
 
