@@ -93,6 +93,41 @@ describe("ChromeStorageMissionsController", () => {
 		});
 	});
 
+	describe("endHitPointsWait", () => {
+		it("прекратява чакането за живот и брои презареждането", async () => {
+			await controller.start(7, settings);
+			storage.sessionStore[missionsAgentKey(7)] = {
+				...(storage.sessionStore[missionsAgentKey(7)] as object),
+				wait: { until: Date.now() + 600_000, reason: "hit-points" },
+				consecutiveNavigations: 2,
+			};
+
+			expect(await controller.endHitPointsWait(7)).toBe(true);
+			expect(await readMissionsState(7)).toMatchObject({
+				status: "running",
+				wait: null,
+				consecutiveNavigations: 3,
+			});
+		});
+
+		it.each([
+			["връщане от мисия", "running", { until: 1, reason: "returning" }],
+			["няма чакане", "running", null],
+			["спрян агент", "idle", { until: 1, reason: "hit-points" }],
+		])("не пипа нищо при %s", async (_case, status, wait) => {
+			storage.sessionStore[missionsAgentKey(7)] = {
+				...MISSIONS_INITIAL_STATE,
+				status,
+				settings,
+				wait,
+			};
+			const before = await readMissionsState(7);
+
+			expect(await controller.endHitPointsWait(7)).toBe(false);
+			expect(await readMissionsState(7)).toEqual(before);
+		});
+	});
+
 	it("isAnyRunning вижда агент в който и да е таб", async () => {
 		expect(await controller.isAnyRunning()).toBe(false);
 

@@ -1,4 +1,4 @@
-import { Square } from "lucide-react";
+import { RefreshCw, Square } from "lucide-react";
 import { shortServerName } from "@/common/features/game/gameUrl";
 import type {
 	MissionsState,
@@ -17,6 +17,8 @@ interface IMissionsStatusProps {
 	/** The game server of the tab this agent runs in. */
 	host: string;
 	onStop: () => void;
+	/** Shown while waiting for hit points, for when a potion beats the check. */
+	onCheckNow: () => void;
 }
 
 const waitLabels: Record<MissionsWait["reason"], string> = {
@@ -29,6 +31,7 @@ export const MissionsStatus = ({
 	state,
 	host,
 	onStop,
+	onCheckNow,
 }: IMissionsStatusProps) => {
 	const { settings, wait, lastMission, run } = state;
 	const remainingMs = useCountdown(wait?.until ?? null);
@@ -50,6 +53,13 @@ export const MissionsStatus = ({
 					? `${waitLabels[wait.reason]} ${formatDuration(remainingMs)}`
 					: "On a mission..."}
 			</p>
+
+			{wait?.reason === "hit-points" && (
+				<Button onClick={onCheckNow} withIcon>
+					<RefreshCw size={11} />
+					Check now
+				</Button>
+			)}
 
 			<Divider />
 

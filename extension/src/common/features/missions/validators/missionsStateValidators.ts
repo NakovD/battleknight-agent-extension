@@ -91,6 +91,8 @@ export const missionsAgentMessageValidator = discriminatedUnion("type", [
 	}),
 	object({ type: literal("MISSIONS_STOP"), tabId: tabIdValidator }),
 	object({ type: literal("MISSIONS_GET_STATUS"), tabId: tabIdValidator }),
+	/** Look for hit points now, instead of at the next scheduled check. */
+	object({ type: literal("MISSIONS_CHECK_NOW"), tabId: tabIdValidator }),
 ]);
 
 export const missionsAgentResponseValidator = discriminatedUnion("ok", [

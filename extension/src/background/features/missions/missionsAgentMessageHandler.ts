@@ -12,9 +12,10 @@ export const createMissionsAgentMessageHandler =
 	(
 		missions: Pick<
 			ChromeStorageMissionsController,
-			"start" | "stop" | "getStatus"
+			"start" | "stop" | "getStatus" | "endHitPointsWait"
 		>,
 		duels: Pick<IDuelsExtensionController, "getStatus">,
+		openWorld: (tabId: number) => Promise<void>,
 	): MessageHandler =>
 	(raw) => {
 		const parsed = missionsAgentMessageValidator.safeParse(raw);
@@ -37,6 +38,14 @@ export const createMissionsAgentMessageHandler =
 					break;
 
 				case "MISSIONS_GET_STATUS":
+					break;
+
+				case "MISSIONS_CHECK_NOW":
+					// The wait ends first: a page that loaded while it lasted would
+					// only see it and keep waiting.
+					if (await missions.endHitPointsWait(message.tabId)) {
+						await openWorld(message.tabId);
+					}
 					break;
 			}
 

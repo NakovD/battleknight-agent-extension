@@ -13,9 +13,15 @@ const settings = {
 };
 
 describe("createMissionsAgentMessageHandler", () => {
-	const missions = { start: vi.fn(), stop: vi.fn(), getStatus: vi.fn() };
+	const missions = {
+		start: vi.fn(),
+		stop: vi.fn(),
+		getStatus: vi.fn(),
+		endHitPointsWait: vi.fn(),
+	};
 	const duels = { getStatus: vi.fn() };
-	const handle = createMissionsAgentMessageHandler(missions, duels);
+	const openWorld = vi.fn();
+	const handle = createMissionsAgentMessageHandler(missions, duels, openWorld);
 
 	beforeEach(() => {
 		vi.resetAllMocks();
@@ -62,6 +68,35 @@ describe("createMissionsAgentMessageHandler", () => {
 		await handle({ type: "MISSIONS_STOP", tabId: 7 });
 
 		expect(missions.stop).toHaveBeenCalledWith(7);
+	});
+
+	describe("MISSIONS_CHECK_NOW", () => {
+		it("прекратява чакането за живот и тогава презарежда картата", async () => {
+			const order: string[] = [];
+			missions.endHitPointsWait.mockImplementation(async () => {
+				order.push("край на чакането");
+				return true;
+			});
+			openWorld.mockImplementation(async () => {
+				order.push("картата");
+			});
+
+			const reply = await handle({ type: "MISSIONS_CHECK_NOW", tabId: 7 });
+
+			// Обратният ред би заредил страница, която още вижда чакането.
+			expect(order).toEqual(["край на чакането", "картата"]);
+			expect(missions.endHitPointsWait).toHaveBeenCalledWith(7);
+			expect(openWorld).toHaveBeenCalledWith(7);
+			expect(reply).toEqual({ ok: true, state: MISSIONS_INITIAL_STATE });
+		});
+
+		it("без чакане за живот не навигира никъде", async () => {
+			missions.endHitPointsWait.mockResolvedValue(false);
+
+			await handle({ type: "MISSIONS_CHECK_NOW", tabId: 7 });
+
+			expect(openWorld).not.toHaveBeenCalled();
+		});
 	});
 
 	it("неочаквана грешка не стига до popup-а с детайлите си", async () => {

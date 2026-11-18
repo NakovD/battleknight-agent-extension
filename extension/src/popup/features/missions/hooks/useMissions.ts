@@ -70,6 +70,8 @@ export const useMissions = (tabId: number) => {
 		handleStart: (settings: MissionsSettings) =>
 			send({ type: "MISSIONS_START", payload: settings }),
 		handleStop: () => send({ type: "MISSIONS_STOP" }),
+		/** While waiting for hit points: look again now, e.g. after a potion. */
+		handleCheckNow: () => send({ type: "MISSIONS_CHECK_NOW" }),
 		/**
 		 * Leaves the error screen for the form. An error the agent stored is
 		 * cleared through Stop, or it would be back the next time the popup opens.

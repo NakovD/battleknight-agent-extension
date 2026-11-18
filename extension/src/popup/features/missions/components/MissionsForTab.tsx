@@ -14,8 +14,14 @@ interface IMissionsForTabProps {
 /** The Missions tab for one game tab: its form, or its agent while it runs. */
 export const MissionsForTab = ({ tabId, host }: IMissionsForTabProps) => {
 	const { locationsState, loadLocations } = useMissionLocations(tabId);
-	const { state, requestError, handleStart, handleStop, handleBack } =
-		useMissions(tabId);
+	const {
+		state,
+		requestError,
+		handleStart,
+		handleStop,
+		handleCheckNow,
+		handleBack,
+	} = useMissions(tabId);
 
 	if (requestError || state?.status === "error") {
 		return (
@@ -31,7 +37,14 @@ export const MissionsForTab = ({ tabId, host }: IMissionsForTabProps) => {
 	}
 
 	if (state.status === "running") {
-		return <MissionsStatus state={state} host={host} onStop={handleStop} />;
+		return (
+			<MissionsStatus
+				state={state}
+				host={host}
+				onStop={handleStop}
+				onCheckNow={handleCheckNow}
+			/>
+		);
 	}
 
 	const handleSubmit = (values: MissionsFormType) => {

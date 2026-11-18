@@ -59,6 +59,26 @@ export class ChromeStorageMissionsController {
 		});
 	}
 
+	/**
+	 * Ends a wait for hit points early — the player may have drunk a potion.
+	 * Only that wait: a countdown is the game's, and ending it early would only
+	 * start it again. Returns whether there was such a wait to end.
+	 */
+	async endHitPointsWait(tabId: number) {
+		const state = await readMissionsState(tabId);
+
+		if (state.status !== "running" || state.wait?.reason !== "hit-points") {
+			return false;
+		}
+
+		await updateMissionsState(tabId, {
+			wait: null,
+			// The reload that follows is one more page change.
+			consecutiveNavigations: state.consecutiveNavigations + 1,
+		});
+		return true;
+	}
+
 	getStatus(tabId: number) {
 		return readMissionsState(tabId);
 	}

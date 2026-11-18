@@ -92,6 +92,13 @@ still disabled, the cause is hit points.
 - **Hit points:** wait. The game restores hit points on the full hour, or the
   player may drink a potion. We never buy one for them. Check again at the next
   full hour or in 15 minutes, whichever comes first.
+
+  While it waits, the popup offers **Check now**, for when a potion beats the
+  next check. The background ends the wait and only then reopens `/world` in
+  that tab. The other way round, the new page would still see the wait and keep
+  waiting. If the hit points aren't back, a new wait starts. The button only
+  appears for this wait: a countdown is the game's own, and checking early
+  would only start it again.
 - **Mission points:** the day's missions are done, so stop and say so.
 
 Consequence for the popup: "Load locations" should still list the locations

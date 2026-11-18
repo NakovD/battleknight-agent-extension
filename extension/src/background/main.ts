@@ -12,6 +12,7 @@ import { GameTabWorldMapReader } from "@/background/features/missions/gameTabWor
 import { createMissionsAgentMessageHandler } from "@/background/features/missions/missionsAgentMessageHandler";
 import { createMissionsMessageHandler } from "@/background/features/missions/missionsMessageHandler";
 import { createMissionsWhoAmIMessageHandler } from "@/background/features/missions/missionsWhoAmIMessageHandler";
+import { openGameWorld } from "@/background/features/missions/openGameWorld";
 import type { MessageHandler } from "@/background/models/messageHandler";
 import { LEGACY_MISSIONS_STORAGE_KEY } from "@/common/features/missions/missionsStateStorage";
 
@@ -46,7 +47,11 @@ const messageHandlers: MessageHandler[] = [
 	createDuelsSettingsMessageHandler(remoteSettings),
 	createAuthMessageHandler(authService),
 	createMissionsMessageHandler(new GameTabWorldMapReader(), controller),
-	createMissionsAgentMessageHandler(missionsController, controller),
+	createMissionsAgentMessageHandler(
+		missionsController,
+		controller,
+		openGameWorld,
+	),
 	createMissionsWhoAmIMessageHandler(sessionStorageReady),
 ];
 

@@ -260,6 +260,39 @@ describe("Missions", () => {
 			});
 		});
 
+		it("докато чака живот, Check now проверява веднага", async () => {
+			agentSend.mockResolvedValue({
+				ok: true,
+				state: {
+					...running,
+					wait: { until: Date.now() + 600_000, reason: "hit-points" },
+				},
+			});
+
+			render(<Missions />);
+			fireEvent.click(await screen.findByRole("button", { name: "Check now" }));
+
+			expect(agentSend).toHaveBeenCalledWith({
+				type: "MISSIONS_CHECK_NOW",
+				tabId: TAB,
+			});
+		});
+
+		it.each([
+			["връщане от мисия", { until: Date.now() + 60_000, reason: "returning" }],
+			["без чакане", null],
+		])("Check now го няма при %s", async (_case, wait) => {
+			agentSend.mockResolvedValue({
+				ok: true,
+				state: { ...running, wait } as MissionsState,
+			});
+
+			render(<Missions />);
+			await screen.findByRole("button", { name: "Stop missions" });
+
+			expect(screen.queryByRole("button", { name: "Check now" })).toBeNull();
+		});
+
 		it("обновява се от съобщенията на background-а", async () => {
 			render(<Missions />);
 			await screen.findByText("Missions are running on s27-bg");
