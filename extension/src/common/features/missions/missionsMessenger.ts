@@ -2,9 +2,10 @@ import { missionLocationsResultValidator } from "@/common/features/missions/vali
 import { sendRuntimeMessage } from "@/common/features/runtimeMessaging";
 
 export const missionsMessenger = {
-	loadLocations: () =>
+	/** Takes this game tab to /world and reads its locations. */
+	loadLocations: (tabId: number) =>
 		sendRuntimeMessage(
-			{ type: "MISSIONS_LOAD_LOCATIONS" },
+			{ type: "MISSIONS_LOAD_LOCATIONS", tabId },
 			missionLocationsResultValidator,
 		),
 };

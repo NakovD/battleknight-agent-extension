@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	MISSIONS_HISTORY_STORAGE_KEY,
 	MISSIONS_INITIAL_STATE,
-	MISSIONS_STORAGE_KEY,
+	missionsAgentKey,
 	readMissionsState,
 } from "@/common/features/missions/missionsStateStorage";
 import type { MissionsSettings } from "@/common/features/missions/models/missionsSettings";
@@ -33,6 +33,9 @@ const running: MissionsState = {
 
 const NOW = new Date(2026, 10, 11, 10, 20, 0).getTime();
 
+/** Табът, в който върви тази стъпка. */
+const TAB = 7;
+
 describe("runMissionStep", () => {
 	let storage: ReturnType<typeof installChromeStorageMock>;
 	let deps: IMissionStepDeps & {
@@ -42,7 +45,7 @@ describe("runMissionStep", () => {
 	let clock: number;
 
 	const setState = (state: Partial<MissionsState>) => {
-		storage.store[MISSIONS_STORAGE_KEY] = { ...running, ...state };
+		storage.sessionStore[missionsAgentKey(TAB)] = { ...running, ...state };
 	};
 
 	const loadPage = (html: string) => {
@@ -55,6 +58,7 @@ describe("runMissionStep", () => {
 		resetMissionStepForTests();
 		clock = NOW;
 		deps = {
+			getTabId: async () => TAB,
 			doc: document,
 			now: () => clock,
 			random: () => 0,
@@ -67,6 +71,27 @@ describe("runMissionStep", () => {
 	afterEach(() => {
 		resetMissionStepForTests();
 		vi.useRealTimers();
+	});
+
+	it("не прави нищо, когато работи агентът на друг таб, а не този", async () => {
+		setState({ status: "idle" });
+		storage.sessionStore[missionsAgentKey(9)] = running;
+		loadPage(worldNormal);
+
+		await runMissionStep(deps);
+
+		expect(deps.submit).not.toHaveBeenCalled();
+		expect(deps.navigate).not.toHaveBeenCalled();
+	});
+
+	it("пише само в състоянието на своя таб", async () => {
+		storage.sessionStore[missionsAgentKey(9)] = running;
+		loadPage(worldNormal);
+
+		await runMissionStep(deps);
+
+		expect((await readMissionsState(TAB)).isMissionPending).toBe(true);
+		expect((await readMissionsState(9)).isMissionPending).toBe(false);
 	});
 
 	it("не прави нищо, когато агентът не работи", async () => {
@@ -114,7 +139,7 @@ describe("runMissionStep", () => {
 			let wasPendingAtSubmit: boolean | undefined;
 			deps.submit.mockImplementation(() => {
 				wasPendingAtSubmit = (
-					storage.store[MISSIONS_STORAGE_KEY] as MissionsState
+					storage.sessionStore[missionsAgentKey(TAB)] as MissionsState
 				).isMissionPending;
 			});
 
@@ -130,7 +155,7 @@ describe("runMissionStep", () => {
 			await runMissionStep(deps);
 
 			expect(deps.submit).not.toHaveBeenCalled();
-			expect(await readMissionsState()).toMatchObject({ status: "idle" });
+			expect(await readMissionsState(TAB)).toMatchObject({ status: "idle" });
 		});
 	});
 
@@ -144,7 +169,7 @@ describe("runMissionStep", () => {
 
 			await runMissionStep(deps);
 
-			const state = await readMissionsState();
+			const state = await readMissionsState(TAB);
 			expect(state.isMissionPending).toBe(false);
 			expect(state.run).toEqual({
 				missions: 3,
@@ -160,6 +185,7 @@ describe("runMissionStep", () => {
 				won: true,
 				silver: 1163,
 				finishedAt: new Date(NOW).toISOString(),
+				server: "localhost:3000",
 			});
 			expect(storage.store[MISSIONS_HISTORY_STORAGE_KEY]).toHaveLength(1);
 			expect(deps.navigate).toHaveBeenCalledWith("http://localhost:3000/world");
@@ -173,7 +199,7 @@ describe("runMissionStep", () => {
 			await runMissionStep(deps);
 
 			expect(storage.store[MISSIONS_HISTORY_STORAGE_KEY]).toHaveLength(1);
-			expect((await readMissionsState()).run.missions).toBe(1);
+			expect((await readMissionsState(TAB)).run.missions).toBe(1);
 		});
 	});
 
@@ -182,7 +208,7 @@ describe("runMissionStep", () => {
 			loadPage(worldReturningMission); // 00:01:51 + 15 s забавяне
 			await runMissionStep(deps);
 
-			expect((await readMissionsState()).wait).toEqual({
+			expect((await readMissionsState(TAB)).wait).toEqual({
 				until: NOW + 126_000,
 				reason: "returning",
 			});
@@ -191,7 +217,7 @@ describe("runMissionStep", () => {
 			await vi.advanceTimersByTimeAsync(126_000);
 
 			expect(deps.navigate).toHaveBeenCalledWith("http://localhost:3000/world");
-			expect((await readMissionsState()).wait).toBeNull();
+			expect((await readMissionsState(TAB)).wait).toBeNull();
 		});
 
 		it("не навигира, ако агентът е спрян по време на чакането", async () => {
@@ -229,7 +255,7 @@ describe("runMissionStep", () => {
 			await runMissionStep(deps);
 
 			expect(deps.navigate).not.toHaveBeenCalled();
-			expect(await readMissionsState()).toMatchObject({
+			expect(await readMissionsState(TAB)).toMatchObject({
 				status: "error",
 				consecutiveNavigations: 0,
 			});
@@ -241,7 +267,7 @@ describe("runMissionStep", () => {
 
 			await runMissionStep(deps);
 
-			expect((await readMissionsState()).consecutiveNavigations).toBe(4);
+			expect((await readMissionsState(TAB)).consecutiveNavigations).toBe(4);
 		});
 
 		it("умишленото чакане нулира брояча", async () => {
@@ -250,7 +276,7 @@ describe("runMissionStep", () => {
 
 			await runMissionStep(deps);
 
-			expect((await readMissionsState()).consecutiveNavigations).toBe(0);
+			expect((await readMissionsState(TAB)).consecutiveNavigations).toBe(0);
 		});
 	});
 
@@ -265,7 +291,7 @@ describe("runMissionStep", () => {
 
 		await runMissionStep(deps);
 
-		expect(await readMissionsState()).toMatchObject({
+		expect(await readMissionsState(TAB)).toMatchObject({
 			status: "idle",
 			errorMessage: expect.stringContaining("No mission points left"),
 		});

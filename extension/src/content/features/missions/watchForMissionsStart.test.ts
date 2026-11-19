@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MISSIONS_STORAGE_KEY } from "@/common/features/missions/missionsStateStorage";
+import { missionsAgentKey } from "@/common/features/missions/missionsStateStorage";
 import { installChromeStorageMock } from "@/testUtils/chromeStorageMock";
 
 const runMissionStep = vi.fn();
@@ -26,9 +26,9 @@ describe("watchForMissionsStart", () => {
 
 	it("пуска стъпка в момента, в който агентът стартира", () => {
 		storage.dispatchChange(
-			MISSIONS_STORAGE_KEY,
+			missionsAgentKey(7),
 			{ status: "running" },
-			"local",
+			"session",
 			{ status: "idle" },
 		);
 
@@ -37,9 +37,9 @@ describe("watchForMissionsStart", () => {
 
 	it("не реагира на собствения напредък на агента", () => {
 		storage.dispatchChange(
-			MISSIONS_STORAGE_KEY,
+			missionsAgentKey(7),
 			{ status: "running", consecutiveNavigations: 2 },
-			"local",
+			"session",
 			{ status: "running", consecutiveNavigations: 1 },
 		);
 
@@ -50,11 +50,22 @@ describe("watchForMissionsStart", () => {
 		storage.dispatchChange(
 			"duelsExtensionState",
 			{ status: "running" },
-			"local",
+			"session",
 			{ status: "idle" },
 		);
 
 		expect(runMissionStep).not.toHaveBeenCalled();
+	});
+
+	it("агентът на който и да е таб буди стъпка — тя сама проверява своя таб", () => {
+		storage.dispatchChange(
+			missionsAgentKey(9),
+			{ status: "running" },
+			"session",
+			undefined,
+		);
+
+		expect(runMissionStep).toHaveBeenCalledOnce();
 	});
 
 	it("пуска стъпка, когато табът се върне на преден план", () => {

@@ -5,37 +5,54 @@ type StorageChangeListener = (
 	areaName: string,
 ) => void;
 
+/** One in-memory storage area: chrome.storage.local or chrome.storage.session. */
+const createArea = (store: Record<string, unknown>) => ({
+	get: vi.fn(
+		(
+			key: string | null,
+			callback: (result: Record<string, unknown>) => void,
+		) => {
+			// null asks for everything in the area, as the real API does.
+			if (key === null) {
+				callback({ ...store });
+				return;
+			}
+			callback(key in store ? { [key]: store[key] } : {});
+		},
+	),
+	set: vi.fn((items: Record<string, unknown>, callback?: () => void) => {
+		Object.assign(store, items);
+		callback?.();
+	}),
+	remove: vi.fn((key: string, callback?: () => void) => {
+		delete store[key];
+		callback?.();
+	}),
+});
+
 /**
- * Минимален in-memory mock на chrome.storage.local за тестове.
+ * Минимален in-memory mock на chrome.storage.local и chrome.storage.session за
+ * тестове.
  *
  * `set()` НЕ пуска автоматично onChanged listener-ите — целта е тестовете
  * да контролират изрично кога симулират "външна" промяна (напр. content
  * script-ът пише директно в storage) чрез dispatchChange(), вместо всеки
  * write() сам да си echo-ва собствената промяна.
+ *
+ * Отговаря синхронно, за разлика от истинския (асинхронен) storage — race-ове,
+ * които зависят от това, не се виждат в тестовете.
  */
 export function installChromeStorageMock() {
 	const store: Record<string, unknown> = {};
+	const sessionStore: Record<string, unknown> = {};
 	const changeListeners = new Set<StorageChangeListener>();
 
 	const chromeMock = {
 		storage: {
-			local: {
-				get: vi.fn(
-					(
-						key: string,
-						callback: (result: Record<string, unknown>) => void,
-					) => {
-						callback(key in store ? { [key]: store[key] } : {});
-					},
-				),
-				set: vi.fn((items: Record<string, unknown>, callback?: () => void) => {
-					Object.assign(store, items);
-					callback?.();
-				}),
-				remove: vi.fn((key: string, callback?: () => void) => {
-					delete store[key];
-					callback?.();
-				}),
+			local: createArea(store),
+			session: {
+				...createArea(sessionStore),
+				setAccessLevel: vi.fn(async () => {}),
 			},
 			onChanged: {
 				addListener: vi.fn((listener: StorageChangeListener) => {
@@ -64,5 +81,5 @@ export function installChromeStorageMock() {
 		});
 	};
 
-	return { store, dispatchChange };
+	return { store, sessionStore, dispatchChange };
 }

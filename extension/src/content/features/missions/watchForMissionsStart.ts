@@ -1,4 +1,4 @@
-import { MISSIONS_STORAGE_KEY } from "@/common/features/missions/missionsStateStorage";
+import { tabIdOfMissionsAgentKey } from "@/common/features/missions/missionsStateStorage";
 import { runMissionStep } from "@/content/features/missions/runMissionStep";
 
 const statusOf = (value: unknown) =>
@@ -9,29 +9,28 @@ const statusOf = (value: unknown) =>
  * reload — the same two triggers as the duels agent's watchForAgentStart:
  * the state turning to "running", and the tab coming to the front.
  *
- * runMissionStep checks the state itself and ignores overlapping calls, so
- * both are safe to fire liberally. Returns a function that unsubscribes both.
+ * Any tab's agent starting wakes every game tab: telling them apart would need
+ * this tab's id up front. runMissionStep reads its own tab's state and does
+ * nothing if that isn't running, and it ignores overlapping calls, so both
+ * triggers are safe to fire liberally. Returns a function that unsubscribes both.
  */
 export const watchForMissionsStart = () => {
 	const onStorageChanged = (
 		changes: Record<string, chrome.storage.StorageChange>,
 		areaName: string,
 	) => {
-		if (areaName !== "local") return;
+		if (areaName !== "session") return;
 
-		const change = changes[MISSIONS_STORAGE_KEY];
-		if (!change) return;
+		// Only the moment one starts: agents write their own progress while
+		// running, and reacting to every write would start a step each.
+		const hasStarted = Object.entries(changes).some(
+			([key, change]) =>
+				tabIdOfMissionsAgentKey(key) !== null &&
+				statusOf(change.newValue) === "running" &&
+				statusOf(change.oldValue) !== "running",
+		);
 
-		// Only the moment it starts: the agent writes its own progress to this
-		// key while running, and reacting to every write would start a step each.
-		if (
-			statusOf(change.newValue) !== "running" ||
-			statusOf(change.oldValue) === "running"
-		) {
-			return;
-		}
-
-		void runMissionStep();
+		if (hasStarted) void runMissionStep();
 	};
 
 	const onVisibilityChange = () => {

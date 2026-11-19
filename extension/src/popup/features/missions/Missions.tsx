@@ -1,52 +1,32 @@
-import { AgentError } from "@/popup/components/common/agent/AgentError";
-import { MissionsForm } from "@/popup/features/missions/components/MissionsForm";
-import { MissionsStatus } from "@/popup/features/missions/components/MissionsStatus";
-import { useMissionLocations } from "@/popup/features/missions/hooks/useMissionLocations";
-import { useMissions } from "@/popup/features/missions/hooks/useMissions";
-import type { MissionsForm as MissionsFormType } from "@/popup/features/missions/models/missionsForm";
+import { MissionsForTab } from "@/popup/features/missions/components/MissionsForTab";
+import { useActiveGameTab } from "@/popup/hooks/useActiveGameTab";
 
+/**
+ * Missions run per game tab, so the popup shows the agent of the tab it was
+ * opened over — one account's, when two are open side by side.
+ */
 export const Missions = () => {
-	const { locationsState, loadLocations } = useMissionLocations();
-	const { state, requestError, handleStart, handleStop, handleBack } =
-		useMissions();
+	const activeTab = useActiveGameTab();
 
-	if (requestError || state?.status === "error") {
-		return (
-			<AgentError
-				message={requestError ?? state?.errorMessage ?? null}
-				onBack={handleBack}
-			/>
-		);
-	}
-
-	if (!state) {
+	if (activeTab.status === "loading") {
 		return <p className="p-4 text-[11px] text-stone-500">Loading...</p>;
 	}
 
-	if (state.status === "running") {
-		return <MissionsStatus state={state} onStop={handleStop} />;
+	if (activeTab.status === "none") {
+		return (
+			<p role="status" className="p-4 text-[11px] text-amber-400/90">
+				Open this popup over the game tab you want missions in. Each game tab
+				runs its own missions.
+			</p>
+		);
 	}
 
-	const handleSubmit = (values: MissionsFormType) => {
-		// The form only enables Start once a location was picked from a loaded map.
-		if (locationsState.status !== "loaded") return;
-
-		void handleStart({ ...values, city: locationsState.city });
-	};
-
+	// Keyed by tab, so nothing of one tab's agent can linger into another's.
 	return (
-		<>
-			{/* Why the agent stopped on its own — out of mission points, for one. */}
-			{state.errorMessage && (
-				<p role="status" className="px-4 pt-3 text-[11px] text-amber-400/90">
-					{state.errorMessage}
-				</p>
-			)}
-			<MissionsForm
-				locationsState={locationsState}
-				onLoadLocations={() => void loadLocations()}
-				onSubmit={handleSubmit}
-			/>
-		</>
+		<MissionsForTab
+			key={activeTab.tabId}
+			tabId={activeTab.tabId}
+			host={activeTab.host}
+		/>
 	);
 };

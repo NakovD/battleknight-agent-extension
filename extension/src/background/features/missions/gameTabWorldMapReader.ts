@@ -1,12 +1,10 @@
+import { isGameUrl } from "@/common/features/game/gameUrl";
 import type { MissionLocationsResult } from "@/common/features/missions/models/missionLocations";
 import { missionLocationsResultValidator } from "@/common/features/missions/validators/missionLocationsValidators";
 
-/** Same pattern as the manifest's content script — every server and language. */
-export const GAME_TAB_URL_PATTERN = "https://*.battleknight.gameforge.com/*";
-
 type ChromeTabs = Pick<
 	typeof chrome.tabs,
-	"query" | "update" | "sendMessage" | "onUpdated"
+	"get" | "update" | "sendMessage" | "onUpdated"
 >;
 
 interface IGameTabWorldMapReaderOptions {
@@ -32,10 +30,11 @@ const unreachable: MissionLocationsResult = {
 };
 
 /**
- * Takes the open game tab to /world and has its content script read the map.
+ * Takes a game tab to /world and has its content script read the map.
  *
- * The server comes from the tab itself: it differs per player (s26-bg, s27-bg,
- * ...), so there is no address to hardcode.
+ * The tab is the one the popup was opened over: each tab can run its own
+ * agent, for its own account. The server comes from the tab itself — it
+ * differs per player (s26-bg, s27-bg, ...), so there is no address to hardcode.
  */
 export class GameTabWorldMapReader {
 	private readonly options: IGameTabWorldMapReaderOptions;
@@ -47,10 +46,11 @@ export class GameTabWorldMapReader {
 		this.options = { ...defaultOptions, ...options };
 	}
 
-	async read(): Promise<MissionLocationsResult> {
-		const tab = await this.findGameTab();
+	async read(tabId: number): Promise<MissionLocationsResult> {
+		const tab = await this.tabs.get(tabId).catch(() => null);
 
-		if (tab?.id === undefined || !tab.url) {
+		// Closed meanwhile, or navigated away from the game.
+		if (tab?.id === undefined || !tab.url || !isGameUrl(tab.url)) {
 			return { status: "unavailable", reason: "game-not-open" };
 		}
 
@@ -61,12 +61,6 @@ export class GameTabWorldMapReader {
 		if (!(await loaded)) return unreachable;
 
 		return this.askContentScript(tab.id);
-	}
-
-	/** The tab the player is looking at, if there are several. */
-	private async findGameTab() {
-		const tabs = await this.tabs.query({ url: GAME_TAB_URL_PATTERN });
-		return tabs.find((tab) => tab.active) ?? tabs[0];
 	}
 
 	private waitForLoad(tabId: number) {

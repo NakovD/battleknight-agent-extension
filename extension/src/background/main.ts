@@ -11,7 +11,16 @@ import { ChromeStorageMissionsController } from "@/background/features/missions/
 import { GameTabWorldMapReader } from "@/background/features/missions/gameTabWorldMapReader";
 import { createMissionsAgentMessageHandler } from "@/background/features/missions/missionsAgentMessageHandler";
 import { createMissionsMessageHandler } from "@/background/features/missions/missionsMessageHandler";
+import { createMissionsWhoAmIMessageHandler } from "@/background/features/missions/missionsWhoAmIMessageHandler";
+import { openGameWorld } from "@/background/features/missions/openGameWorld";
 import type { MessageHandler } from "@/background/models/messageHandler";
+import { LEGACY_MISSIONS_STORAGE_KEY } from "@/common/features/missions/missionsStateStorage";
+
+// Each game tab keeps its missions agent in session storage, which only the
+// extension's own pages may use until it is opened up to content scripts too.
+const sessionStorageReady = chrome.storage.session.setAccessLevel({
+	accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS",
+});
 
 const controller = new ChromeStorageAgentController();
 const sessions = new ChromeStorageAuthSessionStore();
@@ -30,19 +39,25 @@ const remoteSettings = new RemoteDuelsSettingsService(
 
 const messageHandlers: MessageHandler[] = [
 	createDuelsMessageHandler(controller, async () =>
-		(await missionsController.getStatus()).status === "running"
-			? "The missions agent is running. Stop it first: both agents drive the same game tab."
+		// Duels still act in every game tab, so any tab's missions would clash.
+		(await missionsController.isAnyRunning())
+			? "Missions are running in a game tab. Stop them first: the duels agent acts in every game tab."
 			: null,
 	),
 	createDuelsSettingsMessageHandler(remoteSettings),
 	createAuthMessageHandler(authService),
 	createMissionsMessageHandler(new GameTabWorldMapReader(), controller),
-	createMissionsAgentMessageHandler(missionsController, controller),
+	createMissionsAgentMessageHandler(
+		missionsController,
+		controller,
+		openGameWorld,
+	),
+	createMissionsWhoAmIMessageHandler(sessionStorageReady),
 ];
 
-chrome.runtime.onMessage.addListener((raw, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((raw, sender, sendResponse) => {
 	for (const handle of messageHandlers) {
-		const reply = handle(raw);
+		const reply = handle(raw, sender);
 
 		if (reply) {
 			reply.then(sendResponse);
@@ -70,9 +85,19 @@ controller.onStatusChange((state) => {
 	);
 });
 
-missionsController.onStatusChange((state) => {
+missionsController.onStatusChange((tabId, state) => {
 	chrome.runtime.sendMessage(
-		{ type: "MISSIONS_STATUS_UPDATE", payload: state },
+		{ type: "MISSIONS_STATUS_UPDATE", tabId, payload: state },
 		() => void chrome.runtime.lastError, // няма слушащ popup — игнорираме
 	);
+});
+
+// A closed tab takes its missions agent with it.
+chrome.tabs.onRemoved.addListener((tabId) => {
+	void missionsController.remove(tabId);
+});
+
+// Before agents ran per tab, one record held the only agent's state.
+chrome.runtime.onInstalled.addListener(() => {
+	void chrome.storage.local.remove(LEGACY_MISSIONS_STORAGE_KEY);
 });

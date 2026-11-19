@@ -10,7 +10,8 @@ export const createMissionsMessageHandler =
 		duels: Pick<IDuelsExtensionController, "getStatus">,
 	): MessageHandler =>
 	(raw) => {
-		if (!missionsMessageValidator.safeParse(raw).success) return null;
+		const parsed = missionsMessageValidator.safeParse(raw);
+		if (!parsed.success) return null;
 
 		const handle = async (): Promise<MissionLocationsResult> => {
 			// Loading the map navigates the game tab, which the duels agent is
@@ -19,7 +20,7 @@ export const createMissionsMessageHandler =
 				return { status: "unavailable", reason: "duels-running" };
 			}
 
-			return worldMap.read();
+			return worldMap.read(parsed.data.tabId);
 		};
 
 		return handle().catch((err): MissionLocationsResult => {

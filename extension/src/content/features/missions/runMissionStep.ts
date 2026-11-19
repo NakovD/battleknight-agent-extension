@@ -9,6 +9,7 @@ import type {
 	MissionsState,
 } from "@/common/features/missions/models/missionsState";
 import { decideMissionStep } from "@/content/features/missions/decideMissionStep";
+import { getOwnTabId } from "@/content/features/missions/ownTabId";
 
 /**
  * Circuit breaker: this many navigations in a row without finishing a mission
@@ -23,6 +24,8 @@ const missionKarmaValues: Record<MissionsSettings["karma"], string> = {
 };
 
 export interface IMissionStepDeps {
+	/** Which agent this is: every game tab runs its own. */
+	getTabId: () => Promise<number>;
 	doc: Document;
 	now: () => number;
 	random: () => number;
@@ -31,6 +34,7 @@ export interface IMissionStepDeps {
 }
 
 const defaultDeps: IMissionStepDeps = {
+	getTabId: getOwnTabId,
 	doc: document,
 	now: Date.now,
 	random: Math.random,
@@ -66,11 +70,12 @@ export const runMissionStep = async (
 };
 
 const executeMissionStep = async (deps: IMissionStepDeps) => {
-	const state = await readMissionsState();
+	const tabId = await deps.getTabId();
+	const state = await readMissionsState(tabId);
 	if (state.status !== "running") return;
 
 	if (!state.settings) {
-		await updateMissionsState({
+		await updateMissionsState(tabId, {
 			status: "error",
 			errorMessage: "The missions agent is running but has no settings.",
 		});
@@ -90,19 +95,19 @@ const executeMissionStep = async (deps: IMissionStepDeps) => {
 			case "wait":
 				// The same wait again only needs its timer back, not another write.
 				if (step.wait !== state.wait) {
-					await updateMissionsState({
+					await updateMissionsState(tabId, {
 						wait: step.wait,
 						consecutiveNavigations: 0,
 					});
 				}
 
-				scheduleWaitEnd(step.wait.until - deps.now(), deps, worldUrl);
+				scheduleWaitEnd(tabId, step.wait.until - deps.now(), deps, worldUrl);
 				break;
 
 			case "go-to-world":
-				if (await tripCircuitBreaker(state)) break;
+				if (await tripCircuitBreaker(tabId, state)) break;
 
-				await updateMissionsState({
+				await updateMissionsState(tabId, {
 					wait: null,
 					consecutiveNavigations: state.consecutiveNavigations + 1,
 				});
@@ -110,19 +115,20 @@ const executeMissionStep = async (deps: IMissionStepDeps) => {
 				break;
 
 			case "start-mission": {
-				if (await tripCircuitBreaker(state)) break;
+				if (await tripCircuitBreaker(tabId, state)) break;
 
 				const form = fillMissionForm(deps.doc, settings);
 
 				if (!form) {
 					await stop(
+						tabId,
 						"Could not find the game's mission form. The game's layout may have changed.",
 					);
 					break;
 				}
 
 				// Pending before submitting, so the report it leads to is recognised.
-				await updateMissionsState({
+				await updateMissionsState(tabId, {
 					wait: null,
 					isMissionPending: true,
 					consecutiveNavigations: state.consecutiveNavigations + 1,
@@ -135,6 +141,7 @@ const executeMissionStep = async (deps: IMissionStepDeps) => {
 				const record: MissionRecord = {
 					...step.report,
 					finishedAt: new Date(deps.now()).toISOString(),
+					server: deps.doc.location.host,
 					city: settings.city,
 					location: settings.location,
 					karma: settings.karma,
@@ -142,7 +149,7 @@ const executeMissionStep = async (deps: IMissionStepDeps) => {
 				};
 
 				await appendMissionsHistory(record);
-				await updateMissionsState({
+				await updateMissionsState(tabId, {
 					isMissionPending: false,
 					lastMission: record,
 					run: addToRun(state.run, record),
@@ -155,11 +162,11 @@ const executeMissionStep = async (deps: IMissionStepDeps) => {
 			}
 
 			case "stop":
-				await stop(step.reason);
+				await stop(tabId, step.reason);
 				break;
 		}
 	} catch (err) {
-		await updateMissionsState({
+		await updateMissionsState(tabId, {
 			status: "error",
 			errorMessage: err instanceof Error ? err.message : String(err),
 			wait: null,
@@ -193,12 +200,12 @@ const fillMissionForm = (doc: Document, settings: MissionsSettings) => {
 	return form;
 };
 
-const tripCircuitBreaker = async (state: MissionsState) => {
+const tripCircuitBreaker = async (tabId: number, state: MissionsState) => {
 	if (state.consecutiveNavigations + 1 < MAX_CONSECUTIVE_NAVIGATIONS) {
 		return false;
 	}
 
-	await updateMissionsState({
+	await updateMissionsState(tabId, {
 		status: "error",
 		errorMessage: `The missions agent stopped itself after ${MAX_CONSECUTIVE_NAVIGATIONS} page changes in a row without finishing a mission — it seems to be going round in circles.`,
 		wait: null,
@@ -208,8 +215,8 @@ const tripCircuitBreaker = async (state: MissionsState) => {
 	return true;
 };
 
-const stop = (reason: string) =>
-	updateMissionsState({
+const stop = (tabId: number, reason: string) =>
+	updateMissionsState(tabId, {
 		status: "idle",
 		errorMessage: reason,
 		wait: null,
@@ -229,6 +236,7 @@ const addToRun = (run: MissionsState["run"], record: MissionRecord) => ({
  * snapshot, and reading it again would only start another wait.
  */
 const scheduleWaitEnd = (
+	tabId: number,
 	delayMs: number,
 	deps: IMissionStepDeps,
 	worldUrl: string,
@@ -239,12 +247,15 @@ const scheduleWaitEnd = (
 		async () => {
 			waitTimer = null;
 
-			const state = await readMissionsState();
+			const state = await readMissionsState(tabId);
 			// Stopped meanwhile, or started over with another wait.
 			if (state.status !== "running" || !state.wait) return;
 			if (deps.now() < state.wait.until) return;
 
-			await updateMissionsState({ wait: null, consecutiveNavigations: 1 });
+			await updateMissionsState(tabId, {
+				wait: null,
+				consecutiveNavigations: 1,
+			});
 			deps.navigate(worldUrl);
 		},
 		Math.max(0, delayMs),
