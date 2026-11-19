@@ -175,10 +175,19 @@ Roughly in the order worth caring about.
    (see "Missions, per tab" in [MISSIONS.md](MISSIONS.md)). The popup controls
    the tab it was opened over. State lives in `chrome.storage.session`, keyed by
    tab id. A content script learns its own id from the background. A closed
-   tab's state is removed. Duels' settings would also need keeping per server.
+   tab's state is removed.
 
-   Until then, the two agents still exclude each other: duels won't start while
-   any tab runs missions, and missions won't start while duels run.
+   **Decided on 2026-11-19: the saved duels settings stay shared for now.** The
+   account's settings (API, `/settings`) are one set for every server. Each tab
+   starts from them, the player adjusts them before Start, and each tab's agent
+   runs with what it was started with. Saving them per server is a separate,
+   later task (see the roadmap), because it changes the API and needs a
+   migration.
+
+   Until duels go per tab, the two agents still exclude each other: duels won't
+   start while any tab runs missions, and missions won't start while duels run.
+   Once they are per tab, that rule can become per tab too, so one tab can run
+   missions while another runs duels.
 2. **The renewal has never been watched in a browser.** It fires 15 minutes into
    a live session, so it needs a real sit-and-wait. Everything else about it is
    unit tested and was smoke tested against a running API.
@@ -237,6 +246,11 @@ free-text input.
 - **Dashboard** — attack history and statistics. Mission history is already
   recorded in `chrome.storage`; the report ideas, such as silver per location
   and payout types against luck, are in [MISSIONS.md](MISSIONS.md).
+- **Duels settings per server** — the API keeps one set of duels settings per
+  account, but two accounts on different servers usually want different
+  levels, loot and orders. Key them by server, which means an API change, a
+  migration, and the popup sending the tab's server. Decided on 2026-11-19 to
+  do it after duels run per tab, as its own task.
 - **Missions, next** — ideas for later in [MISSIONS.md](MISSIONS.md):
   missions paid with rubies as an opt-in, stop conditions, and a browser
   notification when an agent stops by itself.
